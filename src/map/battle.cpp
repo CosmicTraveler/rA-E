@@ -5851,20 +5851,6 @@ static int battle_calc_attack_skill_ratio(struct Damage* wd, struct block_list *
 				skillratio += 50 + 50 * skill_lv;
 			RE_LVL_DMOD(100);
 			break;
-		case BO_EXPLOSIVE_POWDER:
-			skillratio += -100 + 400 + 550 * skill_lv;
-			skillratio += 5 * sstatus->pow;
-			if (sc && sc->getSCE(SC_RESEARCHREPORT))
-				skillratio += 100 * skill_lv;
-			RE_LVL_DMOD(100);
-			break;
-		case BO_MAYHEMIC_THORNS:
-			skillratio += -100 + 200 + 300 * skill_lv;
-			skillratio += 5 * sstatus->pow;
-			if (sc && sc->getSCE(SC_RESEARCHREPORT))
-				skillratio += 150;
-			RE_LVL_DMOD(100);
-			break;
 		case TR_ROSEBLOSSOM:
 			skillratio += -100 + 200 + 2000 * skill_lv;
 
