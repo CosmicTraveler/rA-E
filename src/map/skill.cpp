@@ -5251,8 +5251,8 @@ int skill_castend_damage_id (struct block_list* src, struct block_list *bl, uint
 		break;
 
 	case SHC_SHADOW_STAB:
-		if (sc && (sc->getSCE(SC_CLOAKING) || sc->getSCE(SC_CLOAKINGEXCEED)))
-			flag |= 2;// Flag to deal 2 hits.
+		if (sc && sc->getSCE(SC_CLOAKINGEXCEED))
+			flag |= 2;// Flag to deal 3 hits.
 
 		status_change_end(src, SC_CLOAKING);
 		status_change_end(src, SC_CLOAKINGEXCEED);
@@ -7348,12 +7348,14 @@ int skill_castend_nodamage_id (struct block_list *src, struct block_list *bl, ui
 #endif
 			status_set_hp(src, 1, 0);
 			break;
-		} else if (status_isdead(bl) && flag&1) { //Revive
-			skill_area_temp[0]++; //Count it in, then fall-through to the Resurrection code.
-			skill_lv = 3; //Resurrection level 3 is used
-			[[fallthrough]];
-		} else //Invalid target, skip resurrection.
+		} else if (!(status_isdead(bl) && flag&1)) { 
+			//Invalid target, skip resurrection.
 			break;
+		}
+		//Revive
+		skill_area_temp[0]++; //Count it in, then fall-through to the Resurrection code.
+		skill_lv = 3; //Resurrection level 3 is used
+		[[fallthrough]];
 
 	case ALL_RESURRECTION:
 		if(sd && (map_flag_gvg2(bl->m) || map_getmapflag(bl->m, MF_BATTLEGROUND)))

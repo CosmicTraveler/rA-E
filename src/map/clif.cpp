@@ -81,9 +81,6 @@ static inline int32 client_exp(t_exp exp) {
 static struct eri *delay_clearunit_ers;
 
 struct s_packet_db packet_db[MAX_PACKET_DB + 1];
-// Reuseable global packet buffer to prevent too many allocations
-// Take socket.cpp::socket_max_client_packet into consideration
-static int8 packet_buffer[UINT16_MAX];
 unsigned long color_table[COLOR_MAX];
 
 #include "clif_obfuscation.hpp"
@@ -25190,6 +25187,12 @@ void clif_parse_partybooking_reply( int fd, map_session_data* sd ){
 	}
 
 	clif_partybooking_reply( tsd, sd, p->accept );
+#endif
+}
+
+void clif_parse_reset_skill( int fd, map_session_data* sd ){
+#if PACKETVER_MAIN_NUM >= 20220216 || PACKETVER_ZERO_NUM >= 20220203
+	PACKET_CZ_RESET_SKILL* p = (PACKET_CZ_RESET_SKILL*)RFIFOP( fd, 0 );
 #endif
 }
 
