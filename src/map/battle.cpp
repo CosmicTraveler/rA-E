@@ -5572,7 +5572,7 @@ static int battle_calc_attack_skill_ratio(struct Damage* wd, struct block_list *
 			break;
 		case DK_HACKANDSLASHER:
 		case DK_HACKANDSLASHER_ATK:
-			skillratio += -100 + 300 + 700 * skill_lv;
+			skillratio += -100 + 200 + 750 * skill_lv;
 			skillratio += 7 * sstatus->pow;
 			RE_LVL_DMOD(100);
 			break;
@@ -5583,7 +5583,7 @@ static int battle_calc_attack_skill_ratio(struct Damage* wd, struct block_list *
 			RE_LVL_DMOD(100);
 			break;
 		case DK_MADNESS_CRUSHER:
-			skillratio += -100 + 400 + 800 * skill_lv + 7 * sstatus->pow;
+			skillratio += -100 + 350 + 1600 * skill_lv + 10 * sstatus->pow;
 			if( sd != nullptr ){
 				int16 index = sd->equip_index[EQI_HAND_R];
 
@@ -5596,9 +5596,9 @@ static int battle_calc_attack_skill_ratio(struct Damage* wd, struct block_list *
 				skillratio *= 2;
 			break;
 		case DK_STORMSLASH:
-			skillratio += -100 + 100 + 170 * skill_lv + 5 * sstatus->pow;
+			skillratio += -100 + 200 + 400 * skill_lv + 5 * sstatus->pow;
 			RE_LVL_DMOD(100);
-			if (sc && sc->getSCE(SC_GIANTGROWTH) && rnd()%100 < 30)
+			if (sc && sc->getSCE(SC_GIANTGROWTH) && rnd_chance(60, 100))
 				skillratio *= 2;
 			break;
 		case DK_DRAGONIC_BREATH:
@@ -5743,7 +5743,7 @@ static int battle_calc_attack_skill_ratio(struct Damage* wd, struct block_list *
 			RE_LVL_DMOD(100);
 			break;
 		case MT_AXE_STOMP:
-			skillratio += -100 + 350 + 850 * skill_lv + 5 * sstatus->pow;
+			skillratio += -100 + 400 + 950 * skill_lv + 5 * sstatus->pow;
 			RE_LVL_DMOD(100);
 			break;
 		case MT_MIGHTY_SMASH:
@@ -5920,13 +5920,18 @@ static int battle_calc_attack_skill_ratio(struct Damage* wd, struct block_list *
 			}
 			break;
 		case TR_RHYTHMSHOOTING:
-			skillratio += -100 + 200 + 120 * skill_lv;
+			skillratio += -100 + 450 + 650 * skill_lv;
 
 			if (sd && pc_checkskill(sd, TR_STAGE_MANNER) > 0)
-				skillratio += 3 * sstatus->con;
+				skillratio += 5 * sstatus->con;
 
-			if (tsc && tsc->getSCE(SC_SOUNDBLEND))
-				skillratio += 100 + 100 * skill_lv;
+			if (tsc && tsc->getSCE(SC_SOUNDBLEND)) {
+				if (skill_lv == 4)
+					skillratio += 830;	// Typo in skill description ?
+				else
+					skillratio += 350 + 100 * skill_lv;
+				skillratio += 2 * sstatus->con;
+			}
 
 			RE_LVL_DMOD(100);
 			if (sc && sc->getSCE(SC_MYSTIC_SYMPHONY)) {
@@ -8551,12 +8556,14 @@ struct Damage battle_calc_magic_attack(struct block_list *src,struct block_list 
 						skillratio += -100 + ( 570 + 20 * pc_checkskill( sd, ABC_MAGIC_SWORD_M ) ) * skill_lv + 5 * sstatus->spl;
 						RE_LVL_DMOD(100);
 						break;
-					case TR_METALIC_FURY: {
-							int area = skill_get_splash(skill_id, skill_lv);
-							int count = map_forcountinarea(skill_check_bl_sc,target->m,target->x - area,target->y - area,target->x + area,target->y + area,5,BL_MOB,SC_SOUNDBLEND);
-							skillratio += -100 + (2200 + 300 * count) * skill_lv + 5 * sstatus->spl;
-							RE_LVL_DMOD(100);
+					case TR_METALIC_FURY:
+						skillratio += -100 + 2600 * skill_lv;
+						// !Todo: skill affected by SPL (without SC_SOUNDBLEND) as well?
+						if (tsc && tsc->getSCE(SC_SOUNDBLEND)) {
+							skillratio += 1000 * skill_lv;
+							skillratio += 2 * pc_checkskill(sd, TR_STAGE_MANNER) * sstatus->spl;
 						}
+						RE_LVL_DMOD(100);
 						break;
 					case TR_SOUNDBLEND:
 						skillratio += -100 + 120 * skill_lv + 5 * sstatus->spl;

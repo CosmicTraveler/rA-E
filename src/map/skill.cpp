@@ -2179,8 +2179,6 @@ int skill_additional_effect( struct block_list* src, struct block_list *bl, uint
 		[[fallthrough]];
 	case WM_METALICSOUND:
 	case WM_REVERBERATION:
-	case TR_RHYTHMSHOOTING:
-	case TR_METALIC_FURY:
 		status_change_end(bl, SC_SOUNDBLEND);
 		break;
 	case EM_DIAMOND_STORM:
@@ -5861,6 +5859,7 @@ int skill_castend_damage_id (struct block_list* src, struct block_list *bl, uint
 	case SS_KINRYUUHOU:
 	case HN_JUPITEL_THUNDER_STORM:
 	case IG_SHIELD_SHOOTING:
+	case TR_METALIC_FURY:
 		if( flag&1 ) {//Recursive invocation
 			int sflag = skill_area_temp[0] & 0xFFF;
 			int heal = 0;
