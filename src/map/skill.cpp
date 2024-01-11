@@ -5383,7 +5383,6 @@ int skill_castend_damage_id (struct block_list* src, struct block_list *bl, uint
 		break;
 	case DK_DRAGONIC_AURA:
 	case DK_STORMSLASH:
-	case IG_GRAND_JUDGEMENT:
 	case CD_EFFLIGO:
 	case ABC_FRENZY_SHOT:
 	case WH_HAWKRUSH:
@@ -5397,8 +5396,6 @@ int skill_castend_damage_id (struct block_list* src, struct block_list *bl, uint
 		skill_attack(BF_WEAPON, src, src, bl, skill_id, skill_lv, tick, flag);
 		if (skill_id == DK_DRAGONIC_AURA)
 			sc_start(src, src, SC_DRAGONIC_AURA, 100, skill_lv, skill_get_time(skill_id,skill_lv));
-		else if (skill_id == IG_GRAND_JUDGEMENT)
-			sc_start(src, src, SC_SPEAR_SCAR, 100, skill_lv, skill_get_time(skill_id, skill_lv));
 		break;
 
 	case SHC_ETERNAL_SLASH:
@@ -5856,6 +5853,7 @@ int skill_castend_damage_id (struct block_list* src, struct block_list *bl, uint
 	case HN_JUPITEL_THUNDER_STORM:
 	case IG_SHIELD_SHOOTING:
 	case TR_METALIC_FURY:
+	case IG_GRAND_JUDGEMENT:
 		if( flag&1 ) {//Recursive invocation
 			int sflag = skill_area_temp[0] & 0xFFF;
 			int heal = 0;
@@ -6079,8 +6077,9 @@ int skill_castend_damage_id (struct block_list* src, struct block_list *bl, uint
 					clif_skill_nodamage(src,bl,skill_id,skill_lv,1);
 					break;
 				case IG_SHIELD_SHOOTING:
+				case IG_GRAND_JUDGEMENT:
 					clif_skill_nodamage(src, bl, skill_id, skill_lv, 1);
-					sc_start(src, src, SC_SHIELD_POWER, 100, skill_lv, skill_get_time(skill_id, skill_lv));
+					sc_start(src, src, skill_get_sc(skill_id), 100, skill_lv, skill_get_time(skill_id, skill_lv));
 					break;
 			}
 
