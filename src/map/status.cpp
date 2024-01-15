@@ -4892,15 +4892,19 @@ int status_calc_pc_sub(map_session_data* sd, uint8 opt)
 			int bonus = sc->getSCE(SC_TALISMAN_OF_FIVE_ELEMENTS)->val2;
 
 			for( const auto &element : elements ){
-				sd->indexed_bonus.magic_atk_ele[(int)element] += bonus;
-				sd->right_weapon.addele[(int)element] += bonus;
-				sd->left_weapon.addele[(int)element] += bonus;
+				sd->indexed_bonus.magic_atk_ele[element] += bonus;
+				sd->right_weapon.addele[element] += bonus;
+				if( !battle_config.left_cardfix_to_right ){
+					sd->left_weapon.addele[element] += bonus;
+				}
 			}
 		}
 		if( sc->getSCE(SC_HEAVEN_AND_EARTH) ) {
 			i = sc->getSCE(SC_HEAVEN_AND_EARTH)->val2;
 			sd->right_weapon.addele[ELE_ALL] += i;
-			sd->left_weapon.addele[ELE_ALL] += i;
+			if( !battle_config.left_cardfix_to_right ){
+				sd->left_weapon.addele[ELE_ALL] += i;
+			}
 			sd->indexed_bonus.magic_atk_ele[ELE_ALL] += i;
 			sd->bonus.short_attack_atk_rate += i;
 			sd->bonus.long_attack_atk_rate += i;
@@ -8713,6 +8717,7 @@ static signed short status_calc_mres(struct block_list *bl, status_change *sc, i
 {
 	if (!sc || !sc->count)
 		return cap_value(mres, 0, SHRT_MAX);
+
 	if (sc->getSCE(SC_GOLDENE_TONE))
 		mres += sc->getSCE(SC_GOLDENE_TONE)->val2;
 	if (sc->getSCE(SC_SHADOW_STRIP) && bl->type != BL_PC)
@@ -9548,8 +9553,8 @@ static int status_get_sc_interval(enum sc_type type)
 		case SC_DEATHHURT:
 		case SC_GRADUAL_GRAVITY:
 		case SC_KILLING_AURA:
-		case SC_HANDICAPSTATE_DEADLYPOISON:
 		case SC_BOSSMAPINFO:
+		case SC_HANDICAPSTATE_DEADLYPOISON:
 			return 1000;
 		case SC_HANDICAPSTATE_CONFLAGRATION:
 		case SC_HANDICAPSTATE_DEPRESSION:
@@ -10668,20 +10673,19 @@ int status_change_start(struct block_list* src, struct block_list* bl,enum sc_ty
 				if( sce->val4 && !val4 ) // You cannot override master guild aura
 					return 0;
 				break;
+			case SC_CLIMAX:
+				sce->val1 = val1;
+				break;
 			case SC_JOINTBEAT:
 				if (sc && sc->getSCE(type)->val2 & BREAK_NECK)
 					return 0; // BREAK_NECK cannot be stacked with new breaks until the status is over.
 				val2 |= sce->val2; // Stackable ailments
-
 				[[fallthrough]];
 			default:
 				if (scdb->flag[SCF_OVERLAPIGNORELEVEL])
 					break;
 				if(sce->val1 > val1)
 					return 1; // Return true to not mess up skill animations. [Skotlex]
-			case SC_CLIMAX:
-				sce->val1 = val1;
-				break;
 		}
 	}
 

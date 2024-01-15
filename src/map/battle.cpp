@@ -3368,8 +3368,11 @@ static bool attack_ignores_def(struct Damage* wd, struct block_list *src, struct
 
 	if (skill_id == RK_WINDCUTTER && sd && sd->status.weapon == W_2HSWORD)
 		return true;
-
-	if (skill_id != CR_GRANDCROSS && skill_id != NPC_GRANDDARKNESS)
+	else if (skill_id == NW_THE_VIGILANTE_AT_NIGHT && sd && sd->status.weapon == W_GATLING)
+		return true;
+	else if (skill_id == NW_ONLY_ONE_BULLET && sd && sd->status.weapon == W_REVOLVER)
+		return true;
+	else if (skill_id != CR_GRANDCROSS && skill_id != NPC_GRANDDARKNESS)
 	{	//Ignore Defense?
 		if (sd && (sd->right_weapon.ignore_def_ele & (1<<tstatus->def_ele) || sd->right_weapon.ignore_def_ele & (1<<ELE_ALL) ||
 			sd->right_weapon.ignore_def_race & (1<<tstatus->race) || sd->right_weapon.ignore_def_race & (1<<RC_ALL) ||
@@ -5779,7 +5782,7 @@ static int battle_calc_attack_skill_ratio(struct Damage* wd, struct block_list *
 			RE_LVL_DMOD(100);
 			break;
 		case ABC_UNLUCKY_RUSH:
-			skillratio += 300 * skill_lv + 5 * sstatus->pow;
+			skillratio += -100 + 100 + 300 * skill_lv + 5 * sstatus->pow;
 			RE_LVL_DMOD(100);
 			break;
 		case ABC_CHAIN_REACTION_SHOT:
@@ -5813,6 +5816,7 @@ static int battle_calc_attack_skill_ratio(struct Damage* wd, struct block_list *
 			if (tstatus->race == RC_BRUTE || tstatus->race == RC_FISH)
 				skillratio += skillratio * 50 / 100;
 			RE_LVL_DMOD(100);
+			break;
 		case WH_GALESTORM:
 			skillratio += -100 + 1000 * skill_lv + 10 * sstatus->con;
 			RE_LVL_DMOD(100);
@@ -5873,15 +5877,17 @@ static int battle_calc_attack_skill_ratio(struct Damage* wd, struct block_list *
 
 			break;
 		case BO_EXPLOSIVE_POWDER:
-			skillratio += -100 + 400 + 450 * skill_lv + 5 * sstatus->pow;
+			skillratio += -100 + 400 + 550 * skill_lv;
+			skillratio += 5 * sstatus->pow;
 			if (sc && sc->getSCE(SC_RESEARCHREPORT))
 				skillratio += 100 * skill_lv;
 			RE_LVL_DMOD(100);
 			break;
 		case BO_MAYHEMIC_THORNS:
-			skillratio += -100 + 200 + 250 * skill_lv + 5 * sstatus->pow;
+			skillratio += -100 + 200 + 300 * skill_lv;
+			skillratio += 5 * sstatus->pow;
 			if (sc && sc->getSCE(SC_RESEARCHREPORT))
-				skillratio += 50 + 50 * skill_lv;
+				skillratio += 150;
 			RE_LVL_DMOD(100);
 			break;
 		case TR_ROSEBLOSSOM:

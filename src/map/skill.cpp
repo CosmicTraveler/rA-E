@@ -2174,13 +2174,7 @@ int skill_additional_effect( struct block_list* src, struct block_list *bl, uint
 	case ABC_UNLUCKY_RUSH:
 		sc_start(src, bl, SC_HANDICAPSTATE_MISFORTUNE, 30 + 10 * skill_lv, skill_lv, skill_get_time(skill_id, skill_lv));
 		break;
-	case TR_ROSEBLOSSOM:// Rose blossom seed can only bloom if the target is hit.
-		sc_start4(src, bl, SC_ROSEBLOSSOM, 100, skill_lv, TR_ROSEBLOSSOM_ATK, src->id, 0, skill_get_time(skill_id, skill_lv));
-		[[fallthrough]];
-	case WM_METALICSOUND:
-	case WM_REVERBERATION:
-		status_change_end(bl, SC_SOUNDBLEND);
-		break;
+
 	case EM_DIAMOND_STORM:
 		sc_start(src, bl, SC_HANDICAPSTATE_FROSTBITE, 40 + 10 * skill_lv, skill_lv, skill_get_time2(skill_id, skill_lv));
 		break;
@@ -5841,6 +5835,9 @@ int skill_castend_damage_id (struct block_list* src, struct block_list *bl, uint
 	case BO_EXPLOSIVE_POWDER:
 	case BO_MAYHEMIC_THORNS:
 	case NPC_WIDECRITICALWOUND:
+	case IG_SHIELD_SHOOTING:
+	case TR_METALIC_FURY:
+	case IG_GRAND_JUDGEMENT:
 	case SKE_SUNSET_BLAST:
 	case SKE_NOON_BLAST:
 	case SOA_EXORCISM_OF_MALICIOUS_SOUL:
@@ -5849,11 +5846,9 @@ int skill_castend_damage_id (struct block_list* src, struct block_list *bl, uint
 	case SOA_TALISMAN_OF_FOUR_BEARING_GOD:
 	case SOA_CIRCLE_OF_DIRECTIONS_AND_ELEMENTALS:
 	case BO_HELL_HOWLING:
+
 	case SS_KINRYUUHOU:
 	case HN_JUPITEL_THUNDER_STORM:
-	case IG_SHIELD_SHOOTING:
-	case TR_METALIC_FURY:
-	case IG_GRAND_JUDGEMENT:
 		if( flag&1 ) {//Recursive invocation
 			int sflag = skill_area_temp[0] & 0xFFF;
 			int heal = 0;
@@ -6060,6 +6055,11 @@ int skill_castend_damage_id (struct block_list* src, struct block_list *bl, uint
 					// TODO: does this buff start before or after dealing damage? [Muh]
 					sc_start( src, src, SC_RUSH_QUAKE2, 100, skill_lv, skill_get_time2( skill_id, skill_lv ) );
 					break;
+				case IG_SHIELD_SHOOTING:
+				case IG_GRAND_JUDGEMENT:
+					clif_skill_nodamage(src, bl, skill_id, skill_lv, 1);
+					sc_start(src, src, skill_get_sc(skill_id), 100, skill_lv, skill_get_time(skill_id, skill_lv));
+					break;
 				case SOA_TALISMAN_OF_RED_PHOENIX:
 					clif_skill_nodamage(src,bl,skill_id,skill_lv,1);
 					skill_area_temp[0] = map_foreachinallrange(skill_area_sub, bl, skill_get_splash(skill_id, skill_lv), BL_CHAR, src, skill_id, skill_lv, tick, BCT_ENEMY, skill_area_sub_count);
@@ -6076,11 +6076,7 @@ int skill_castend_damage_id (struct block_list* src, struct block_list *bl, uint
 					skill_mirage_cast(src, NULL,SS_ANTENPOU, skill_lv, 0, 0, tick,flag);
 					clif_skill_nodamage(src,bl,skill_id,skill_lv,1);
 					break;
-				case IG_SHIELD_SHOOTING:
-				case IG_GRAND_JUDGEMENT:
-					clif_skill_nodamage(src, bl, skill_id, skill_lv, 1);
-					sc_start(src, src, skill_get_sc(skill_id), 100, skill_lv, skill_get_time(skill_id, skill_lv));
-					break;
+
 			}
 
 			// if skill damage should be split among targets, count them
@@ -18175,8 +18171,8 @@ bool skill_check_condition_castbegin(map_session_data* sd, uint16 skill_id, uint
 	// perform skill-group checks
 	if(skill_id != WM_GREAT_ECHO && inf2[INF2_ISCHORUS]) {
 		if (skill_check_pc_partner(sd, skill_id, &skill_lv, AREA_SIZE, 0) < 1 && !(sc && sc->getSCE(SC_KVASIR_SONATA))) {
-		    clif_skill_fail(sd,skill_id,USESKILL_FAIL_LEVEL,0);
-		    return false;
+			clif_skill_fail(sd,skill_id,USESKILL_FAIL_LEVEL,0);
+			return false;
 		}
 	}
 	else if(inf2[INF2_ISENSEMBLE]) {

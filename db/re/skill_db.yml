@@ -39177,10 +39177,10 @@ Body:
     Hit: Single
     HitCount: 1
     CastCancel: true
-    AfterCastActDelay: 500
+    AfterCastActDelay: 150
     Duration1: 180000
     Cooldown: 180000
-    FixedCastTime: 1000
+    FixedCastTime: 1750
     Requires:
       SpCost: 300
       ApCost: 200
@@ -39510,7 +39510,8 @@ Body:
     CastTime: 800
     AfterCastActDelay: 700
     Duration1: 10000
-    FixedCastTime: 200
+    Cooldown: 150
+    FixedCastTime: 1000
     Cooldown: 350
     Requires:
       SpCost:
