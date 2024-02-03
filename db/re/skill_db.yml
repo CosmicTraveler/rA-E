@@ -10125,6 +10125,7 @@ Body:
     FixedCastTime: 700
     CastTimeFlags:
       IgnoreDex: true
+      IgnoreItemBonus: true
     Requires:
       SpCost:
         - Level: 1
@@ -35603,7 +35604,7 @@ Body:
     Description: Violent Quake Attack
     MaxLevel: 5
     Type: Magic
-    TargetType: Attack
+    TargetType: Ground
     Range: 9
     Hit: Single
     HitCount: 1
@@ -35788,7 +35789,7 @@ Body:
     Description: All Bloom Attack
     MaxLevel: 5
     Type: Magic
-    TargetType: Attack
+    TargetType: Ground
     Range: 9
     Hit: Single
     HitCount: 1
@@ -35808,7 +35809,7 @@ Body:
     Description: All Bloom Attack 2
     MaxLevel: 5
     Type: Magic
-    TargetType: Attack
+    TargetType: Ground
     Range: 9
     Hit: Single
     HitCount: 1
@@ -35879,7 +35880,7 @@ Body:
     Description: Crystal Impact Attack
     MaxLevel: 5
     Type: Magic
-    TargetType: Attack
+    TargetType: Ground
     DamageFlags:
       Splash: true
     Hit: Single
@@ -36058,7 +36059,7 @@ Body:
     Description: Astral Strike Attack
     MaxLevel: 10
     Type: Magic
-    TargetType: Attack
+    TargetType: Ground
     Range: 9
     Hit: Single
     HitCount: 1
@@ -36248,8 +36249,8 @@ Body:
     TargetType: Self
     DamageFlags:
       Splash: true
-    Hit: Single
-    HitCount: 1
+    Hit: Multi_Hit
+    HitCount: -3
     Element: Water
     SplashArea:
       - Level: 1
