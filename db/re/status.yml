@@ -8796,6 +8796,10 @@ Body:
     DurationLookup: MT_RUSH_QUAKE
     CalcFlags:
       All: true
+    Flags:
+      NoDispell: true
+      NoBanishingBuster: true
+      NoClearance: true
   - Status: G_LIFEPOTION
     Icon: EFST_G_LIFEPOTION
     Flags:
