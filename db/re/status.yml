@@ -9179,3 +9179,8 @@ Body:
     DurationLookup: SOA_SOUL_OF_HEAVEN_AND_EARTH
     CalcFlags:
       Smatk: true
+  - Status: Hidden_Card
+    Icon: EFST_HIDDEN_CARD
+    DurationLookup: NW_HIDDEN_CARD
+    CalcFlags:
+      All: true
