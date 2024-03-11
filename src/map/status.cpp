@@ -3682,7 +3682,7 @@ int status_calc_pc_sub(map_session_data* sd, uint8 opt)
 	// Give them all modes except these (useful for clones)
 	base_status->mode = static_cast<e_mode>(MD_MASK&~(MD_STATUSIMMUNE|MD_IGNOREMELEE|MD_IGNOREMAGIC|MD_IGNORERANGED|MD_IGNOREMISC|MD_DETECTOR|MD_ANGRY|MD_TARGETWEAK));
 
-	base_status->size = (sd->class_&JOBL_BABY) ? SZ_SMALL : ((sd->class_&MAPID_BASEMASK) == MAPID_SUMMONER ? battle_config.summoner_size : SZ_MEDIUM);
+	base_status->size = (sd->class_&JOBL_BABY) ? SZ_SMALL : (((sd->class_&MAPID_BASEMASK) == MAPID_SUMMONER) ? battle_config.summoner_size : SZ_MEDIUM);
 	if (battle_config.character_size && pc_isriding(sd)) { // [Lupus]
 		if (sd->class_&JOBL_BABY) {
 			if (battle_config.character_size&SZ_BIG)
@@ -4392,10 +4392,10 @@ int status_calc_pc_sub(map_session_data* sd, uint8 opt)
 		base_status->patk += skill;
 	if ((skill = pc_checkskill(sd, HN_SELFSTUDY_SOCERY)) > 0)
 		base_status->smatk += skill;
-	if (sd->status.weapon == W_2HSTAFF && (skill = pc_checkskill(sd, AG_TWOHANDSTAFF)) > 0)// 2-Handed Staff Mastery
-		base_status->smatk += pc_checkskill(sd, AG_TWOHANDSTAFF) * 2;
 	if ((skill = pc_checkskill(sd, NW_P_F_I)) > 0 && (sd->status.weapon >= W_REVOLVER && sd->status.weapon <= W_GRENADE))
 		base_status->patk += skill + 2;
+	if (sd->status.weapon == W_2HSTAFF && (skill = pc_checkskill(sd, AG_TWOHANDSTAFF)) > 0)// 2-Handed Staff Mastery
+		base_status->smatk += pc_checkskill(sd, AG_TWOHANDSTAFF) * 2;
 	if ((skill = pc_checkskill(sd, SOA_TALISMAN_MASTERY)) > 0)
 		base_status->smatk += skill;
 	if ((skill = pc_checkskill(sd, SKE_WAR_BOOK_MASTERY)) > 0)
@@ -4780,6 +4780,8 @@ int status_calc_pc_sub(map_session_data* sd, uint8 opt)
 			sd->bonus.short_attack_atk_rate += 5 * sc->getSCE( SC_RUSH_QUAKE2 )->val1;
 			sd->bonus.long_attack_atk_rate += 5 * sc->getSCE( SC_RUSH_QUAKE2 )->val1;
 		}
+		if (sc->getSCE(SC_HIDDEN_CARD))
+			sd->bonus.long_attack_atk_rate += sc->getSCE(SC_HIDDEN_CARD)->val3;
 
 		if (sc->getSCE(SC_BO_HELL_DUSTY)) {
 			sd->bonus.long_attack_atk_rate += 20;
@@ -4792,8 +4794,6 @@ int status_calc_pc_sub(map_session_data* sd, uint8 opt)
 		}
 		if (sc->getSCE(SC_UNLIMIT))
 			sd->bonus.long_attack_atk_rate += sc->getSCE(SC_UNLIMIT)->val2;
-		if (sc->getSCE(SC_HIDDEN_CARD))
-			sd->bonus.long_attack_atk_rate += sc->getSCE(SC_HIDDEN_CARD)->val3;
 		if (sc->getSCE(SC_DEADLY_DEFEASANCE))
 			sd->special_state.no_magic_damage = 0;
 		if (sc->getSCE(SC_CLIMAX_DES_HU))
@@ -7478,10 +7478,10 @@ static signed short status_calc_critical(struct block_list *bl, status_change *s
 		critical += sc->getSCE(SC_MTF_HITFLEE)->val1;
 	if (sc->getSCE(SC_PACKING_ENVELOPE9))
 		critical += sc->getSCE(SC_PACKING_ENVELOPE9)->val1 * 10;
-	if (sc->getSCE(SC_HANDICAPSTATE_LASSITUDE))
-		critical -= critical * 30 / 100;
 	if (sc->getSCE(SC_INTENSIVE_AIM))
 		critical += 300;
+	if (sc->getSCE(SC_HANDICAPSTATE_LASSITUDE))
+		critical -= critical * 30 / 100;
 
 	return (short)cap_value(critical,10,SHRT_MAX);
 }
@@ -8630,10 +8630,10 @@ static signed short status_calc_patk(struct block_list *bl, status_change *sc, i
 	if( sc->getSCE( SC_ATTACK_STANCE ) ){
 		patk += sc->getSCE( SC_ATTACK_STANCE )->val3;
 	}
-	if (sc->getSCE(SC_TALISMAN_OF_WARRIOR))
-		patk += sc->getSCE(SC_TALISMAN_OF_WARRIOR)->val2;
 	if (sc->getSCE(SC_HIDDEN_CARD))
 		patk += sc->getSCE(SC_HIDDEN_CARD)->val2;
+	if (sc->getSCE(SC_TALISMAN_OF_WARRIOR))
+		patk += sc->getSCE(SC_TALISMAN_OF_WARRIOR)->val2;
 	if (sc->getSCE(SC_TEMPORARY_COMMUNION))
 		patk += sc->getSCE(SC_TEMPORARY_COMMUNION)->val2;
 	if (sc->getSCE(SC_BLESSING_OF_M_CREATURES))
@@ -12891,6 +12891,13 @@ int status_change_start(struct block_list* src, struct block_list* bl,enum sc_ty
 		case SC_WEAPONBREAKER:
 			val2 = val1 * 2 * 100; // Chance to break weapon
 			break;
+		case SC_INTENSIVE_AIM:
+			tick = 500;
+			break;
+		case SC_HIDDEN_CARD:
+			val2 = 3 * val1;
+			val3 = 10 * val1;
+			break;
 		case SC_TALISMAN_OF_PROTECTION:
 			val2 = 2 * val1;
 			val4 = tick / 3000;
@@ -12908,13 +12915,6 @@ int status_change_start(struct block_list* src, struct block_list* bl,enum sc_ty
 			break;
 		case SC_HEAVEN_AND_EARTH:
 			val2 = 5 + 2 * val1;
-			break;
-		case SC_HIDDEN_CARD:
-			val2 = 3 * val1;
-			val3 = 10 * val1;
-			break;
-		case SC_INTENSIVE_AIM:
-			tick = 500;
 			break;
 		case SC_KI_SUL_RAMPAGE:
 			val4 = tick / 1000;
