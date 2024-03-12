@@ -7968,6 +7968,9 @@ Body:
     Flags:
       BlEffect: true
       DisplayPc: true
+      NoBanishingBuster: true
+      NoDispell: true
+      NoClearance: true
   - Status: Ultimate_S
     Icon: EFST_ULTIMATE_S
     DurationLookup: IG_ULTIMATE_SACRIFICE
@@ -8923,6 +8926,10 @@ Body:
     DurationLookup: NW_HIDDEN_CARD
     CalcFlags:
       All: true
+    Flags:
+      NoBanishingBuster: true
+      NoDispell: true
+      NoClearance: true
   - Status: Hogogong
     Icon: EFST_HOGOGONG
     DurationLookup: SH_HOWLING_OF_CHUL_HO
