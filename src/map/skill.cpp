@@ -9807,7 +9807,7 @@ int skill_castend_nodamage_id (struct block_list *src, struct block_list *bl, ui
 		clif_skill_nodamage(src,bl,skill_id,skill_lv,1);
 		if (sd) {
 			sd->state.workinprogress = WIP_DISABLE_ALL;
-			clif_autospell(sd,skill_lv);
+			clif_autospell( *sd, skill_lv );
 		} else {
 			int maxlv=1,spellid=0;
 			static const int spellarray[3] = { MG_COLDBOLT,MG_FIREBOLT,MG_LIGHTNINGBOLT };
@@ -13944,6 +13944,7 @@ int skill_castend_pos2(struct block_list* src, int x, int y, uint16 skill_id, ui
 		break;
 
 	case WZ_ICEWALL:
+	case NPC_CANE_OF_EVIL_EYE:
 		flag|=1;
 		if(skill_unitsetting(src,skill_id,skill_lv,x,y,0))
 			clif_skill_poseffect(src,skill_id,skill_lv,x,y,tick);
@@ -16009,6 +16010,7 @@ int skill_unit_onplace_timer(struct skill_unit *unit, struct block_list *bl, t_t
 		case UNT_ICEMINE:
 		case UNT_FLAMECROSS:
 		case UNT_HELLBURNING:
+		case UNT_CANE_OF_EVIL_EYE:
 		case UNT_RAIN_OF_CRYSTAL:
 		case UNT_MYSTERY_ILLUSION:
 		case UNT_STRANTUM_TREMOR:
