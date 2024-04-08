@@ -4,11 +4,11 @@
 #include "skill.hpp"
 
 #include <array>
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <ctime>
 
 #include <common/cbasetypes.hpp>
 #include <common/ers.hpp>
@@ -6200,7 +6200,7 @@ int skill_castend_damage_id (struct block_list* src, struct block_list *bl, uint
 		break;
 
 	case NPC_MAGICALATTACK:
-		skill_attack(BF_MAGIC,src,src,bl,skill_id,skill_lv,tick,flag);
+		skill_attack(skill_get_type(skill_id), src, src, bl, skill_id, skill_lv, tick, flag);
 		sc_start(src,src,SC_MAGICALATTACK,100,skill_lv,skill_get_time(skill_id,skill_lv));
 		break;
 
