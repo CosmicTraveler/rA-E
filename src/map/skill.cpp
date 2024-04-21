@@ -882,7 +882,7 @@ bool skill_isNotOk(uint16 skill_id, map_session_data *sd)
 	if( sd->sc.getSCE(SC_ALL_RIDING) )
 		return true; //You can't use skills while in the new mounts (The client doesn't let you, this is to make cheat-safe)
 	if (sd->sc.getSCE(SC_HANDICAPSTATE_MISFORTUNE) && rand() % 100 < 30) {
-		clif_skill_fail(sd,skill_id,USESKILL_FAIL_LEVEL,0);
+		clif_skill_fail( *sd, skill_id ,USESKILL_FAIL_LEVEL, 0 );
 		return true;
 	}
 	switch (skill_id) {
@@ -1690,13 +1690,13 @@ int skill_additional_effect( struct block_list* src, struct block_list *bl, uint
 		break;
 
 	case CH_TIGERFIST: {
-		uint16 basetime = skill_get_time(skill_id, skill_lv);
-		uint16 mintime = 30 * (status_get_lv(src) + 100);
+		t_tick basetime = skill_get_time(skill_id, skill_lv);
+		t_tick mintime = 15 * (status_get_lv(src) + 100);
 
-		if (status_get_class_(bl) == CLASS_BOSS)
+		if (status_bl_has_mode(bl, MD_STATUSIMMUNE))
 			basetime /= 5;
-		basetime = min((basetime * status_get_agi(bl)) / -200 + basetime, mintime) / 2;
-		sc_start(src, bl, SC_STOP, (1 + skill_lv) * 10, 0, basetime);
+		basetime = std::max((basetime * status_get_agi(bl)) / -200 + basetime, mintime);
+		sc_start(src, bl, SC_ANKLE, (1 + skill_lv) * 10, 0, basetime);
 	}
 		break;
 
@@ -1704,7 +1704,7 @@ int skill_additional_effect( struct block_list* src, struct block_list *bl, uint
 	case ML_SPIRALPIERCE:
 	case HN_SPIRAL_PIERCE_MAX:
 		if( dstsd || ( dstmd && !status_bl_has_mode(bl,MD_STATUSIMMUNE) ) ) //Does not work on status immune
-			sc_start(src,bl,SC_STOP,100,0,skill_get_time2(skill_id,skill_lv));
+			sc_start(src,bl,SC_ANKLE,100,0,skill_get_time2(skill_id,skill_lv));
 		break;
 
 	case ST_REJECTSWORD:
@@ -5149,9 +5149,9 @@ static int skill_tarotcard(struct block_list* src, struct block_list *target, ui
 		skill_tarotcard(src, target, skill_id, skill_lv, tick);
 		break;
 	}
-	case 8: // THE HANGED MAN - stop, freeze or stoned
+	case 8: // THE HANGED MAN - ankle, freeze or stoned
 	{
-		enum sc_type sc[] = { SC_STOP, SC_FREEZE, SC_STONEWAIT };
+		enum sc_type sc[] = { SC_ANKLE, SC_FREEZE, SC_STONEWAIT };
 		uint8 rand_eff = rnd() % 3;
 		int time = ((rand_eff == 0) ? skill_get_time2(skill_id, skill_lv) : skill_get_time2(status_db.getSkill(sc[rand_eff]), 1));
 
@@ -6191,7 +6191,7 @@ int skill_castend_damage_id (struct block_list* src, struct block_list *bl, uint
 				}
 			}
 			if (sd)
-				clif_skill_fail(sd, skill_id, USESKILL_FAIL_LEVEL, 0);
+				clif_skill_fail(*sd, skill_id, USESKILL_FAIL_LEVEL, 0);
 			return 1;
 		}
 		break;
@@ -6233,7 +6233,7 @@ int skill_castend_damage_id (struct block_list* src, struct block_list *bl, uint
 				unit_setdir(bl,dir);
 				clif_blown(src);
 			} else if (sd) {
-				clif_skill_fail(sd, skill_id, USESKILL_FAIL_TARGET_SHADOW_SPACE, 0);
+				clif_skill_fail( *sd, skill_id, USESKILL_FAIL_TARGET_SHADOW_SPACE, 0 );
 				break;
 			}
 		}
@@ -11323,7 +11323,7 @@ int skill_castend_nodamage_id (struct block_list *src, struct block_list *bl, ui
 				break;
 			}
 		}
-		clif_skill_fail(sd, skill_id, USESKILL_FAIL_NEED_WEAPON, 0);
+		clif_skill_fail( *sd, skill_id, USESKILL_FAIL_NEED_WEAPON, 0 );
 		break;
 	case SS_ANTENPOU:
 	case SS_KAGENOMAI:
@@ -14017,6 +14017,9 @@ TIMER_FUNC(skill_castend_id){
 						break;
 				}
 				sc_start2(src, src, type, 100, 0, 1, skill_get_time(ud->skill_id, ud->skill_lv));
+				// During Grand Cross you are in ankle state (cannot move or teleport)
+				if (ud->skill_id == CR_GRANDCROSS)
+					sc_start(src, src, SC_ANKLE, 100, 0, skill_get_time(ud->skill_id, ud->skill_lv));
 				break;
 			}
 			}
@@ -15366,7 +15369,7 @@ int skill_castend_pos2(struct block_list* src, int x, int y, uint16 skill_id, ui
 		skill_area_temp[1] = 0;
 		skill_mirage_cast(src, NULL,SS_ANTENPOU, skill_lv, x, y, tick, flag);
 		if( map_getcell(src->m, x, y, CELL_CHKLANDPROTECTOR) ) {
-			clif_skill_fail(sd,skill_id,USESKILL_FAIL,0);
+			clif_skill_fail( *sd, skill_id, USESKILL_FAIL, 0 );
 			return 0;
 		}
 		clif_skill_nodamage(src, src, skill_id, skill_lv, 1);
@@ -15396,7 +15399,7 @@ int skill_castend_pos2(struct block_list* src, int x, int y, uint16 skill_id, ui
 	case SS_REIKETSUHOU:
 		skill_mirage_cast(src, NULL,SS_ANTENPOU, skill_lv, 0, 0, tick,flag);
 		if( map_getcell(src->m, x, y, CELL_CHKLANDPROTECTOR) ) {
-			clif_skill_fail(sd,skill_id,USESKILL_FAIL,0);
+			clif_skill_fail( *sd, skill_id, USESKILL_FAIL, 0 );
 			return 0;
 		}
 		i = skill_get_splash(skill_id, skill_lv);
@@ -16914,6 +16917,15 @@ int skill_unit_onplace_timer(struct skill_unit *unit, struct block_list *bl, t_t
 		case UNT_MANHOLE:
 			if( sg->val2 == 0 && tsc && ((sg->unit_id == UNT_ANKLESNARE && skill_id != SC_ESCAPE) || bl->id != sg->src_id) ) {
 				t_tick sec = skill_get_time2(sg->skill_id,sg->skill_lv);
+				if (sg->unit_id == UNT_ANKLESNARE) {
+					t_tick mintime = 30 * (status_get_lv(ss) + 100);
+#ifndef RENEWAL
+					// Bosses cannot activate Ankle Snare in renewal so we don't need this code
+					if (status_bl_has_mode(bl, MD_STATUSIMMUNE))
+						sec /= 5;
+#endif
+					sec = std::max((sec * status_get_agi(bl)) / -200 + sec, mintime);
+				}
 
 				if( status_change_start(ss, bl,type,10000,sg->skill_lv,sg->group_id,0,0,sec, SCSTART_NORATEDEF) ) {
 					const struct TimerData* td = tsc->getSCE(type)?get_timer(tsc->getSCE(type)->timer):NULL;
@@ -18858,13 +18870,13 @@ bool skill_check_condition_castbegin(map_session_data* sd, uint16 skill_id, uint
 			break;
 		case SOA_SOUL_GATHERING:
 			if (!(sc && sc->getSCE(SC_SOULCOLLECT))){
-				clif_skill_fail(sd,skill_id,USESKILL_FAIL_CONDITION,0);
+				clif_skill_fail( *sd, skill_id, USESKILL_FAIL_CONDITION, 0 );
 				return false;
 			}
 			break;
 		case SOA_CIRCLE_OF_DIRECTIONS_AND_ELEMENTALS:
 			if (!(sc && sc->getSCE(SC_T_FOURTH_GOD))) {
-				clif_skill_fail(sd,skill_id,USESKILL_FAIL_CONDITION,0);
+				clif_skill_fail( *sd, skill_id, USESKILL_FAIL_CONDITION, 0 );
 				return false;
 			}
 			break;
@@ -18872,31 +18884,31 @@ bool skill_check_condition_castbegin(map_session_data* sd, uint16 skill_id, uint
 			if (sd && !pc_checkskill(sd, SH_COMMUNE_WITH_CHUL_HO)
 				  && !pc_checkskill(sd, SH_COMMUNE_WITH_HYUN_ROK)
 				  && !pc_checkskill(sd, SH_COMMUNE_WITH_KI_SUL)) {
-				clif_skill_fail(sd,skill_id,USESKILL_FAIL_CONDITION,0);
+				clif_skill_fail( *sd, skill_id, USESKILL_FAIL_CONDITION, 0 );
 				return false;
 			}
 			break;
 		case SKE_NOON_BLAST:
 			if (!sc || (!sc->getSCE(SC_RISING_SUN) && !sc->getSCE(SC_NOON_SUN) && !sc->getSCE(SC_SKY_ENCHANT))){
-				clif_skill_fail(sd,skill_id,USESKILL_FAIL_CONDITION,0);
+				clif_skill_fail( *sd, skill_id, USESKILL_FAIL_CONDITION, 0 );
 				return false;
 			}
 			break;
 		case SKE_SUNSET_BLAST:
 			if (!sc || (!sc->getSCE(SC_SUNSET_SUN) && !sc->getSCE(SC_NOON_SUN) && !sc->getSCE(SC_SKY_ENCHANT))){
-				clif_skill_fail(sd,skill_id,USESKILL_FAIL_CONDITION,0);
+				clif_skill_fail( *sd, skill_id, USESKILL_FAIL_CONDITION, 0 );
 				return false;
 			}
 			break;
 		case SKE_MIDNIGHT_KICK:
 			if (!sc || (!sc->getSCE(SC_RISING_MOON) && !sc->getSCE(SC_MIDNIGHT_MOON) && !sc->getSCE(SC_SKY_ENCHANT))){
-				clif_skill_fail(sd,skill_id,USESKILL_FAIL_CONDITION,0);
+				clif_skill_fail( *sd, skill_id, USESKILL_FAIL_CONDITION, 0 );
 				return false;
 			}
 			break;
 		case SKE_DAWN_BREAK:
 			if (!sc || (!sc->getSCE(SC_DAWN_MOON) && !sc->getSCE(SC_MIDNIGHT_MOON) && !sc->getSCE(SC_SKY_ENCHANT))){
-				clif_skill_fail(sd,skill_id,USESKILL_FAIL_CONDITION,0);
+				clif_skill_fail( *sd, skill_id, USESKILL_FAIL_CONDITION, 0 );
 				return false;
 			}
 			break;
@@ -19119,19 +19131,19 @@ bool skill_check_condition_castbegin(map_session_data* sd, uint16 skill_id, uint
 			default:
 				switch(require.weapon) {
 					case (1 << W_REVOLVER | 1 << W_RIFLE):
-						clif_skill_fail(sd, skill_id, USESKILL_FAIL_NEED_RIFLE_REVOLVER, 0);
+						clif_skill_fail( *sd, skill_id, USESKILL_FAIL_NEED_RIFLE_REVOLVER, 0 );
 						break;
 					case (1 << W_GATLING | 1 << W_SHOTGUN):
-						clif_skill_fail(sd, skill_id, USESKILL_FAIL_NEED_GATLING_SHOTGUT, 0);
+						clif_skill_fail( *sd, skill_id, USESKILL_FAIL_NEED_GATLING_SHOTGUT, 0 );
 						break;
 					case (1 << W_GRENADE | 1 << W_RIFLE):
-						clif_skill_fail(sd, skill_id, USESKILL_FAIL_NEED_GLAUNCHER_RIFLE, 0);
+						clif_skill_fail( *sd, skill_id, USESKILL_FAIL_NEED_GLAUNCHER_RIFLE, 0 );
 						break;
 					case (1 << W_GATLING | 1 << W_REVOLVER):
-						clif_skill_fail(sd, skill_id, USESKILL_FAIL_NEED_GATLING_REVOLVER, 0);
+						clif_skill_fail( *sd, skill_id, USESKILL_FAIL_NEED_GATLING_REVOLVER, 0 );
 						break;
 					case (1 << W_GRENADE | 1 << W_SHOTGUN):
-						clif_skill_fail(sd, skill_id, USESKILL_FAIL_NEED_SHOTGUN_GLAUNCHER, 0);
+						clif_skill_fail( *sd, skill_id, USESKILL_FAIL_NEED_SHOTGUN_GLAUNCHER, 0 );
 						break;
 					case (1 << W_REVOLVER):
 						clif_msg(sd, SKILL_NEED_REVOLVER);
@@ -22091,6 +22103,12 @@ int skill_unit_timer_sub_onplace(struct block_list* bl, va_list ap)
 
 	if( !(skill->inf2[INF2_ISSONG] || skill->inf2[INF2_ISTRAP]) && !skill->inf2[INF2_IGNORELANDPROTECTOR] && group->skill_id != NC_NEUTRALBARRIER && (battle_config.land_protector_behavior ? map_getcell(bl->m, bl->x, bl->y, CELL_CHKLANDPROTECTOR) : map_getcell(unit->bl.m, unit->bl.x, unit->bl.y, CELL_CHKLANDPROTECTOR)) )
 		return 0; //AoE skills are ineffective. [Skotlex]
+
+#ifdef RENEWAL
+	// Ankle Snare can no longer trap bosses in renewal
+	if (group->unit_id == UNT_ANKLESNARE && status_bl_has_mode(bl, MD_STATUSIMMUNE))
+		return 0;
+#endif
 
 	if( battle_check_target(&unit->bl,bl,group->target_flag) <= 0 )
 		return 0;

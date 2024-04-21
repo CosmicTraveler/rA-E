@@ -9727,11 +9727,6 @@ t_tick status_get_sc_def(struct block_list *src, struct block_list *bl, enum sc_
 				tick /= 2; // Half duration for players.
 			sc_def2 = status->mdef*100;
 			break;
-		case SC_ANKLE:
-			if(status_has_mode(status,MD_STATUSIMMUNE)) // Lasts 5 times less on bosses
-				tick /= 5;
-			sc_def = status->agi*50;
-			break;
 		case SC_JOINTBEAT:
 			tick_def2 = 1000 * ((status->luk / 2 + status->agi / 5) / 2); // (50 * LUK / 100 + 20 * AGI / 100) / 2
 			break;
@@ -11716,7 +11711,7 @@ int status_change_start(struct block_list* src, struct block_list* bl,enum sc_ty
 
 		/* General */
 		case SC_FEAR:
-			status_change_start(src,bl,SC_ANKLE,10000,val1,0,0,0,2000,SCSTART_NOAVOID|SCSTART_NOTICKDEF|SCSTART_NORATEDEF);
+			sc_start(src, bl, SC_ANKLE, 100, 0, 2000);
 			break;
 
 		/* Rune Knight */
@@ -13019,10 +13014,6 @@ int status_change_start(struct block_list* src, struct block_list* bl,enum sc_ty
 	//SC that make stop walking
 	if (scdb->flag[SCF_STOPWALKING]) {
 		switch (type) {
-			case SC_ANKLE:
-				if (battle_config.skill_trap_type || !map_flag_gvg(bl->m))
-					unit_stop_walking(bl, 1);
-				break;
 			case SC__MANHOLE:
 				if (bl->type == BL_PC || !unit_blown_immune(bl,0x1))
 					unit_stop_walking(bl,1);
