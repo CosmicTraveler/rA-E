@@ -848,7 +848,7 @@ void clif_charselectok(int id, uint8 ok)
 {
 	map_session_data* sd = map_id2sd(id);
 
-	if ((sd = map_id2sd(id)) == nullptr || !session_isValid(sd->fd))
+	if (sd == nullptr)
 		return;
 
 	PACKET_ZC_RESTART_ACK packet{};
@@ -2261,14 +2261,14 @@ void clif_buylist( map_session_data *sd, struct npc_data *nd ){
 }
 
 
-/// Presents list of items, that can be sold to an NPC shop (ZC_PC_SELL_ITEMLIST).
-/// 00c7 <packet len>.W { <index>.W <price>.L <overcharge price>.L }*
-void clif_selllist(map_session_data& sd) {
-	if (!sd.npc_shopid) {
+/// Presents list of items, that can be sold to an NPC shop.
+/// 00c7 <packet len>.W { <index>.W <price>.L <overcharge price>.L }* (ZC_PC_SELL_ITEMLIST)
+void clif_selllist( map_session_data& sd){
+	if( !sd.npc_shopid ){
 		return;
 	}
 
-	npc_data* nd = map_id2nd(sd.npc_shopid);
+	npc_data* nd = map_id2nd( sd.npc_shopid );
 
 	if( nd == nullptr ){
 		return;

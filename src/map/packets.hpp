@@ -474,6 +474,17 @@ struct PACKET_ZC_INVENTORY_TAB{
 } __attribute__((packed));
 DEFINE_PACKET_HEADER(ZC_INVENTORY_TAB, 0x908)
 
+struct PACKET_ZC_SKILL_SELECT_REQUEST_sub{
+	int16 skill_id;
+} __attribute__((packed));
+
+struct PACKET_ZC_SKILL_SELECT_REQUEST{
+	int16 packetType;
+	int16 packetLength;
+	int32 why;
+	struct PACKET_ZC_SKILL_SELECT_REQUEST_sub skills[];
+} __attribute__((packed));
+
 struct PACKET_CZ_REQ_OPEN_BANKING{
 	int16 packetType;
 	uint32 AID;
@@ -824,17 +835,6 @@ struct PACKET_ZC_STATUS {
 	int16 plusASPD;
 } __attribute__((packed));
 DEFINE_PACKET_HEADER(ZC_STATUS, 0xbd)
-
-struct PACKET_ZC_SKILL_SELECT_REQUEST_sub{
-	int16 skill_id;
-} __attribute__((packed));
-
-struct PACKET_ZC_SKILL_SELECT_REQUEST{
-	int16 packetType;
-	int16 packetLength;
-	int32 why;
-	struct PACKET_ZC_SKILL_SELECT_REQUEST_sub skills[];
-} __attribute__((packed));
 
 // NetBSD 5 and Solaris don't like pragma pack but accept the packed attribute
 #if !defined( sun ) && ( !defined( __NETBSD__ ) || __NetBSD_Version__ >= 600000000 )
