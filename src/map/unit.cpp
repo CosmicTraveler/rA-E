@@ -2988,7 +2988,7 @@ int unit_skillcastcancel(struct block_list *bl, char type)
 	if(bl->type==BL_MOB)
 		((TBL_MOB*)bl)->skill_idx = -1;
 
-	clif_skillcastcancel(bl);
+	clif_skillcastcancel( *bl );
 
 	return 1;
 }
@@ -3465,6 +3465,7 @@ int unit_free(struct block_list *bl, clr_type clrtype)
 			pc_inventory_rental_clear(sd);
 			pc_delspiritball(sd, sd->spiritball, 1);
 			pc_delspiritcharm(sd, sd->spiritcharm, sd->spiritcharm_type);
+			mob_removeslaves(&sd->bl);
 
 			if( sd->st && sd->st->state != RUN ) {// free attached scripts that are waiting
 				script_free_state(sd->st);

@@ -6186,7 +6186,7 @@ bool pc_isUseitem(map_session_data *sd,int n)
 
 	if( itemdb_group.item_exists( IG_MF_NOTELEPORT, nameid ) ){
 		if( ( mapdata->getMapFlag(MF_NOTELEPORT) || mapdata_flag_gvg2( mapdata ) ) ){
-			clif_skill_teleportmessage( sd, 0 );
+			clif_skill_teleportmessage( *sd, NOTIFY_MAPINFO_CANT_TP );
 			return false;
 		}
 
@@ -7037,7 +7037,7 @@ enum e_setpos pc_setpos_savepoint( map_session_data& sd, clr_type clrtype ){
  *------------------------------------------*/
 char pc_randomwarp(map_session_data *sd, clr_type type, bool ignore_mapflag)
 {
-	int x,y,i=0;
+	int16 x,y,i=0;
 
 	nullpo_ret(sd);
 
@@ -7046,9 +7046,10 @@ char pc_randomwarp(map_session_data *sd, clr_type type, bool ignore_mapflag)
 	if (mapdata->getMapFlag(MF_NOTELEPORT) && !ignore_mapflag) //Teleport forbidden
 		return 3;
 
+	int edge = battle_config.map_edge_size;
 	do {
-		x = rnd()%(mapdata->xs-2)+1;
-		y = rnd()%(mapdata->ys-2)+1;
+		x = rnd_value<int16>(edge, mapdata->xs - edge - 1);
+		y = rnd_value<int16>(edge, mapdata->ys - edge - 1);
 	} while((map_getcell(sd->bl.m,x,y,CELL_CHKNOPASS) || (!battle_config.teleport_on_portal && npc_check_areanpc(1,sd->bl.m,x,y,1))) && (i++) < 1000);
 
 	if (i < 1000)
@@ -7069,7 +7070,7 @@ bool pc_memo(map_session_data* sd, int pos)
 
 	// check mapflags
 	if( sd->bl.m >= 0 && (map_getmapflag(sd->bl.m, MF_NOMEMO) || map_getmapflag(sd->bl.m, MF_NOWARPTO)) && !pc_has_permission(sd, PC_PERM_WARP_ANYWHERE) ) {
-		clif_skill_teleportmessage(sd, 1); // "Saved point cannot be memorized."
+		clif_skill_teleportmessage( *sd, NOTIFY_MAPINFO_CANT_MEMO ); // "Saved point cannot be memorized."
 		return false;
 	}
 
@@ -7080,11 +7081,11 @@ bool pc_memo(map_session_data* sd, int pos)
 	// check required skill level
 	skill = pc_checkskill(sd, AL_WARP);
 	if( skill < 1 ) {
-		clif_skill_memomessage(sd,2); // "You haven't learned Warp."
+		clif_skill_memomessage( *sd, WARPPOINT_NOT_LEARNED ); // "You haven't learned Warp."
 		return false;
 	}
 	if( skill < 2 || skill - 2 < pos ) {
-		clif_skill_memomessage(sd,1); // "Skill Level is not high enough."
+		clif_skill_memomessage( *sd, WARPPOINT_LOW_LEVEL ); // "Skill Level is not high enough."
 		return false;
 	}
 
@@ -7108,7 +7109,7 @@ bool pc_memo(map_session_data* sd, int pos)
 	sd->status.memo_point[pos].x = sd->bl.x;
 	sd->status.memo_point[pos].y = sd->bl.y;
 
-	clif_skill_memomessage(sd, 0);
+	clif_skill_memomessage( *sd, WARPPOINT_SUCCESS );
 
 	return true;
 }
@@ -8117,7 +8118,7 @@ int pc_checkbaselevelup(map_session_data *sd) {
 				sc_start(&sd->bl, &sd->bl, status.second->type, 100, 10, 600000);
 		}
 	}
-	clif_misceffect(&sd->bl,0);
+	clif_misceffect( sd->bl, NOTIFYEFFECT_BASE_LEVEL_UP );
 	npc_script_event(sd, NPCE_BASELVUP); //LORDALFA - LVLUPEVENT
 
 	if(sd->status.party_id)
@@ -8172,7 +8173,7 @@ int pc_checkjoblevelup(map_session_data *sd)
 	clif_updatestatus(*sd,SP_NEXTJOBEXP);
 	clif_updatestatus(*sd,SP_SKILLPOINT);
 	status_calc_pc(sd,SCO_FORCE);
-	clif_misceffect(&sd->bl,1);
+	clif_misceffect( sd->bl, NOTIFYEFFECT_JOB_LEVEL_UP );
 	if (pc_checkskill(sd, SG_DEVIL) && ((sd->class_&MAPID_THIRDMASK) == MAPID_STAR_EMPEROR || pc_is_maxjoblv(sd)) )
 		clif_status_change(&sd->bl, EFST_DEVIL1, 1, 0, 0, 0, 1); //Permanent blind effect from SG_DEVIL.
 
@@ -8704,7 +8705,7 @@ bool pc_statusup(map_session_data* sd, int type, int increase)
 
 	// check conditions
 	if (type < SP_STR || type > SP_LUK || increase <= 0) {
-		clif_statusupack(sd, type, 0, 0);
+		clif_statusupack( *sd, type, false );
 		return false;
 	}
 
@@ -8713,14 +8714,14 @@ bool pc_statusup(map_session_data* sd, int type, int increase)
 	max_increase = pc_maxparameterincrease(sd, type);
 	increase = cap_value(increase, 0, max_increase); // cap to the maximum status points available
 	if (increase <= 0 || current + increase > pc_maxparameter(sd, (enum e_params)(type-SP_STR))) {
-		clif_statusupack(sd, type, 0, 0);
+		clif_statusupack( *sd, type, false );
 		return false;
 	}
 
 	// check status points
 	needed_points = pc_need_status_point(sd, type, increase);
 	if (needed_points < 0 || needed_points > sd->status.status_point) { // Sanity check
-		clif_statusupack(sd, type, 0, 0);
+		clif_statusupack( *sd, type, false );
 		return false;
 	}
 
@@ -8737,7 +8738,7 @@ bool pc_statusup(map_session_data* sd, int type, int increase)
 	clif_updatestatus(*sd, SP_STATUSPOINT);
 
 	// update stat value
-	clif_statusupack(sd, type, 1, final_value); // required
+	clif_statusupack( *sd, type, true, final_value );
 	if( final_value > 255 )
 		clif_updatestatus(*sd, static_cast<_sp>( type ) ); // send after the 'ack' to override the truncated value
 
@@ -8765,7 +8766,7 @@ int pc_statusup2(map_session_data* sd, int type, int val)
 
 	if( type < SP_STR || type > SP_LUK )
 	{
-		clif_statusupack(sd,type,0,0);
+		clif_statusupack( *sd, type, false );
 		return 0;
 	}
 
@@ -8781,7 +8782,7 @@ int pc_statusup2(map_session_data* sd, int type, int val)
 		clif_updatestatus(*sd, static_cast<_sp>( SP_USTR + type-SP_STR ) );
 
 	// update stat value
-	clif_statusupack(sd,type,1,val); // required
+	clif_statusupack( *sd, type, true, val );
 	if( val > 255 )
 		clif_updatestatus(*sd, static_cast<_sp>( type ) ); // send after the 'ack' to override the truncated value
 
@@ -8864,7 +8865,7 @@ bool pc_traitstatusup(map_session_data* sd, int type, int increase)
 
 	// check conditions
 	if (type < SP_POW || type > SP_CRT || increase <= 0) {
-		clif_statusupack(sd, type, 0, 0);
+		clif_statusupack( *sd, type, false );
 		return false;
 	}
 
@@ -8874,7 +8875,7 @@ bool pc_traitstatusup(map_session_data* sd, int type, int increase)
 
 	increase = cap_value(increase, 0, max_increase); // cap to the maximum status points available
 	if (increase <= 0 || current + increase > pc_maxparameter(sd, (enum e_params)(PARAM_POW + type - SP_POW))) {
-		clif_statusupack(sd, type, 0, 0);
+		clif_statusupack( *sd, type, false );
 		return false;
 	}
 
@@ -8882,7 +8883,7 @@ bool pc_traitstatusup(map_session_data* sd, int type, int increase)
 	int needed_points = pc_need_trait_point(sd, type, increase);
 
 	if (needed_points < 0 || needed_points > sd->status.trait_point) { // Sanity check
-		clif_statusupack(sd, type, 0, 0);
+		clif_statusupack( *sd, type, false );
 		return false;
 	}
 
@@ -8900,7 +8901,7 @@ bool pc_traitstatusup(map_session_data* sd, int type, int increase)
 	clif_updatestatus(*sd, SP_TRAITPOINT);
 
 	// update stat value
-	clif_statusupack(sd, type, 1, final_value); // required
+	clif_statusupack( *sd, type, true, final_value );
 	if (final_value > 255)
 		clif_updatestatus(*sd, static_cast<_sp>( type ) ); // send after the 'ack' to override the truncated value
 
@@ -8926,7 +8927,7 @@ int pc_traitstatusup2(map_session_data* sd, int type, int val)
 	nullpo_ret(sd);
 
 	if (type < SP_POW || type > SP_CRT) {
-		clif_statusupack(sd, type, 0, 0);
+		clif_statusupack( *sd, type, false );
 		return 0;
 	}
 
@@ -8942,7 +8943,7 @@ int pc_traitstatusup2(map_session_data* sd, int type, int val)
 		clif_updatestatus(*sd, static_cast<_sp>( SP_UPOW + type - SP_POW ) );
 
 	// update stat value
-	clif_statusupack(sd, type, 1, val); // required
+	clif_statusupack( *sd, type, true, val );
 	if (val > 255)
 		clif_updatestatus(*sd, static_cast<_sp>( type ) ); // send after the 'ack' to override the truncated value
 
@@ -9488,7 +9489,7 @@ void pc_respawn(map_session_data* sd, clr_type clrtype)
 	pc_setstand(sd, true);
 	pc_setrestartvalue(sd,3);
 	if( pc_setpos( sd, mapindex_name2id( sd->status.save_point.map ), sd->status.save_point.x, sd->status.save_point.y, clrtype ) != SETPOS_OK ){
-		clif_resurrection(&sd->bl, 1); //If warping fails, send a normal stand up packet.
+		clif_resurrection( sd->bl ); //If warping fails, send a normal stand up packet.
 	}
 }
 
@@ -9607,7 +9608,7 @@ int pc_dead(map_session_data *sd,struct block_list *src)
 			sd->state.snovice_dead_flag = 1;
 			pc_setrestartvalue(sd,1);
 			status_percent_heal(&sd->bl, 100, 100);
-			clif_resurrection(&sd->bl, 1);
+			clif_resurrection( sd->bl );
 			if(battle_config.pc_invincible_time)
 				pc_setinvincibletimer(sd, battle_config.pc_invincible_time);
 			sc_start(&sd->bl,&sd->bl,SC_STEELBODY,100,5,skill_get_time(MO_STEELBODY,5));
@@ -9741,7 +9742,7 @@ int pc_dead(map_session_data *sd,struct block_list *src)
 				(unsigned int)md->level < pc_maxbaselv(sd) &&
 				!md->guardian_data && !md->special_state.ai// Guardians/summons should not level. [Skotlex]
 			) { 	// monster level up [Valaris]
-				clif_misceffect(&md->bl,0);
+				clif_misceffect( md->bl, NOTIFYEFFECT_BASE_LEVEL_UP );
 				md->level++;
 				status_calc_mob(md, SCO_NONE);
 				status_percent_heal(src,10,0);
@@ -10862,9 +10863,10 @@ bool pc_jobchange(map_session_data *sd,int job, char upper)
 		status_change_end( &sd->bl, SC_SPIRIT );
 	}
 
-	if(sd->status.manner < 0)
-		clif_changestatus(sd,SP_MANNER,sd->status.manner);
-
+	if(sd->status.manner < 0){
+		clif_changemanner( *sd );
+		clif_updatestatus(*sd,SP_MANNER);
+	}
 	status_calc_pc(sd,SCO_FORCE);
 	pc_checkallowskill(sd);
 	pc_equiplookall(sd);
@@ -11972,8 +11974,8 @@ bool pc_equipitem(map_session_data *sd,short n,int req_pos,bool equipswitch)
 		pc_equipswitch_remove(sd, n);
 
 		if(pos==EQP_AMMO) {
-			clif_arrowequip(sd,n);
-			clif_arrow_fail(sd,3);
+			clif_arrowequip( *sd );
+			clif_arrow_fail( *sd, ARROWFAIL_SUCCESS );
 		}
 		else
 			clif_equipitemack( *sd, ITEM_EQUIP_ACK_OK, n, pos );
