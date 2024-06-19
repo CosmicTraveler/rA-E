@@ -1912,9 +1912,9 @@
 	export_constant(SC_HIDDEN_CARD);
 	export_constant(SC_PERIOD_RECEIVEITEM_2ND);
 	export_constant(SC_PERIOD_PLUSEXP_2ND);
-	export_constant(SC_EXTREMITYFIST2);
 	export_constant(SC_POWERUP);
 	export_constant(SC_AGIUP);
+	export_constant(SC_PROTECTION);
 
 	/* status icons */
 	export_deprecated_constant2("SI_BLANK",-1);
@@ -10639,6 +10639,11 @@
 	export_constant(IWA_NONE);
 	export_constant(IWA_NOTDEAD);
 
+	/* npcspeed command */
+	export_constant(MIN_WALK_SPEED);
+	export_constant(MAX_WALK_SPEED);
+	export_constant(DEFAULT_NPC_WALK_SPEED);
+
 	/* skill hit */
 	export_constant(DMG_SINGLE);
 	export_constant(DMG_MULTI_HIT);
@@ -10654,6 +10659,7 @@
 	export_constant(NK_IGNOREDEFCARD);
 	export_constant(NK_IGNORELONGCARD);
 	export_constant(NK_CRITICAL);
+	export_constant(NK_SIMPLEDEFENSE);
 
 	/* skill inf */
 	export_constant(INF_PASSIVE_SKILL);
