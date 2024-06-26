@@ -1585,11 +1585,18 @@ int skill_additional_effect( struct block_list* src, struct block_list *bl, uint
 		break;
 
 	case BA_FROSTJOKER:
-		sc_start(src,bl,SC_FREEZE,(15+5*skill_lv),skill_lv,skill_get_time2(skill_id,skill_lv));
-		break;
-
 	case DC_SCREAM:
-		sc_start(src,bl,SC_STUN,(25+5*skill_lv),skill_lv,skill_get_time2(skill_id,skill_lv));
+	{
+		int rate = 150 + 50 * skill_lv; // Aegis accuracy (1000 = 100%)
+		int duration = skill_get_time2(skill_id, skill_lv);
+		if (skill_id == DC_SCREAM) rate += 100; // DC_SCREAM has a 10% higher base chance
+		if (battle_check_target(src, bl, BCT_PARTY) > 0) {
+			// On party members: Chance is divided by 4 and BA_FROSTJOKER duration is fixed to 15000ms
+			rate /= 4;
+			duration = skill_get_time(skill_id, skill_lv);
+		}
+		status_change_start(src, bl, skill_get_sc(skill_id), rate*10, skill_lv, 0, 0, 0, duration, SCSTART_NONE);
+	}
 		break;
 
 	case BD_LULLABY:
@@ -2618,8 +2625,12 @@ int skill_counter_additional_effect (struct block_list* src, struct block_list *
 	}
 
 	if(sd && (sd->class_&MAPID_UPPERMASK) == MAPID_STAR_GLADIATOR &&
-		map_getmapflag(sd->bl.m, MF_NOSUNMOONSTARMIRACLE) == 0)	//SG_MIRACLE [Komurka]
-		status_change_start(src,src,SC_MIRACLE,battle_config.sg_miracle_skill_ratio,1,0,0,0,battle_config.sg_miracle_skill_duration,SCSTART_NONE);
+		map_getmapflag(sd->bl.m, MF_NOSUNMOONSTARMIRACLE) == 0) {	//SG_MIRACLE [Komurka]
+		// 0.005% chance per sg_miracle_skill_ratio
+		// Chance is further reduced if agi is above 46
+		if (rnd_chance(battle_config.sg_miracle_skill_ratio, 20000) && rnd_chance(46, (int)sd->battle_status.agi))
+			sc_start(src, src, SC_MIRACLE, 100, 1, battle_config.sg_miracle_skill_duration);
+	}
 
 	if(sd && skill_id && attack_type&BF_MAGIC && status_isdead(bl) &&
 	 	!(skill_get_inf(skill_id)&(INF_GROUND_SKILL|INF_SELF_SKILL)) &&
@@ -8018,6 +8029,7 @@ int skill_castend_nodamage_id (struct block_list *src, struct block_list *bl, ui
 		break;
 
 	case NPC_GRADUAL_GRAVITY:
+	case NPC_DEADLYCURSE:
 		status_change_start(src, bl, type, 10000, skill_lv, 0, 0, 0, skill_get_time(skill_id, skill_lv), SCSTART_NOAVOID|SCSTART_NOTICKDEF|SCSTART_NORATEDEF);
 		clif_skill_nodamage(src, bl, skill_id, skill_lv, 1);
 		break;
@@ -10758,6 +10770,7 @@ int skill_castend_nodamage_id (struct block_list *src, struct block_list *bl, ui
 	case NPC_WIDE_DEEP_SLEEP:
 	case NPC_WIDESIREN:
 	case NPC_WIDEWEB:
+	case NPC_DEADLYCURSE2:
 		if (flag&1){
 			switch ( type ) {
 			case SC_BURNING:
@@ -19936,9 +19949,7 @@ int skill_frostjoke_scream(struct block_list *bl, va_list ap)
 			return 0;//Frost Joke / Scream cannot target invisible or MADO Gear characters [Ind]
 	}
 	//It has been reported that Scream/Joke works the same regardless of woe-setting. [Skotlex]
-	if(battle_check_target(src,bl,BCT_ENEMY) > 0)
-		skill_additional_effect(src,bl,skill_id,skill_lv,BF_MISC,ATK_DEF,tick);
-	else if(battle_check_target(src,bl,BCT_PARTY) > 0 && rnd()%100 < 10)
+	if(battle_check_target(src,bl,BCT_ENEMY|BCT_PARTY) > 0)
 		skill_additional_effect(src,bl,skill_id,skill_lv,BF_MISC,ATK_DEF,tick);
 
 	return 0;
