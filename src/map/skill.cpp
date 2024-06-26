@@ -1585,11 +1585,18 @@ int skill_additional_effect( struct block_list* src, struct block_list *bl, uint
 		break;
 
 	case BA_FROSTJOKER:
-		sc_start(src,bl,SC_FREEZE,(15+5*skill_lv),skill_lv,skill_get_time2(skill_id,skill_lv));
-		break;
-
 	case DC_SCREAM:
-		sc_start(src,bl,SC_STUN,(25+5*skill_lv),skill_lv,skill_get_time2(skill_id,skill_lv));
+	{
+		int rate = 150 + 50 * skill_lv; // Aegis accuracy (1000 = 100%)
+		int duration = skill_get_time2(skill_id, skill_lv);
+		if (skill_id == DC_SCREAM) rate += 100; // DC_SCREAM has a 10% higher base chance
+		if (battle_check_target(src, bl, BCT_PARTY) > 0) {
+			// On party members: Chance is divided by 4 and BA_FROSTJOKER duration is fixed to 15000ms
+			rate /= 4;
+			duration = skill_get_time(skill_id, skill_lv);
+		}
+		status_change_start(src, bl, skill_get_sc(skill_id), rate*10, skill_lv, 0, 0, 0, duration, SCSTART_NONE);
+	}
 		break;
 
 	case BD_LULLABY:
@@ -2530,11 +2537,7 @@ int skill_onskillusage(map_session_data *sd, struct block_list *bl, uint16 skill
 
 /* Splitted off from skill_additional_effect, which is never called when the
  * attack skill kills the enemy. Place in this function counter status effects
- * when using skills (eg: Asura's sp regen penalty, or counter-status effects
- * from cards) that will take effect on the source, not the target. [Skotlex]
- * Note: Currently this function only applies to Extremity Fist and BF_WEAPON
- * type of skills, so not every instance of skill_additional_effect needs a call
- * to this one.
+ * when using skills that will take effect on the source, not the target. [Skotlex]
  */
 int skill_counter_additional_effect (struct block_list* src, struct block_list *bl, uint16 skill_id, uint16 skill_lv, int attack_type, t_tick tick)
 {
@@ -2582,9 +2585,6 @@ int skill_counter_additional_effect (struct block_list* src, struct block_list *
 	}
 
 	switch(skill_id) {
-	case MO_EXTREMITYFIST:
-		sc_start(src,src,SC_EXTREMITYFIST,100,skill_lv,skill_get_time2(skill_id,skill_lv));
-		break;
 	case GS_FULLBUSTER:
 		sc_start(src,src,SC_BLIND,2*skill_lv,skill_lv,skill_get_time2(skill_id,skill_lv));
 		break;
@@ -2626,8 +2626,12 @@ int skill_counter_additional_effect (struct block_list* src, struct block_list *
 	}
 
 	if(sd && (sd->class_&MAPID_UPPERMASK) == MAPID_STAR_GLADIATOR &&
-		map_getmapflag(sd->bl.m, MF_NOSUNMOONSTARMIRACLE) == 0)	//SG_MIRACLE [Komurka]
-		status_change_start(src,src,SC_MIRACLE,battle_config.sg_miracle_skill_ratio,1,0,0,0,battle_config.sg_miracle_skill_duration,SCSTART_NONE);
+		map_getmapflag(sd->bl.m, MF_NOSUNMOONSTARMIRACLE) == 0) {	//SG_MIRACLE [Komurka]
+		// 0.005% chance per sg_miracle_skill_ratio
+		// Chance is further reduced if agi is above 46
+		if (rnd_chance(battle_config.sg_miracle_skill_ratio, 20000) && rnd_chance(46, (int)sd->battle_status.agi))
+			sc_start(src, src, SC_MIRACLE, 100, 1, battle_config.sg_miracle_skill_duration);
+	}
 
 	if(sd && skill_id && attack_type&BF_MAGIC && status_isdead(bl) &&
 	 	!(skill_get_inf(skill_id)&(INF_GROUND_SKILL|INF_SELF_SKILL)) &&
@@ -5631,11 +5635,9 @@ int skill_castend_damage_id (struct block_list* src, struct block_list *bl, uint
 			skill_attack(BF_WEAPON,src,src,bl,skill_id,skill_lv,tick,flag);
 			if (skill_id == MO_EXTREMITYFIST) {
 				status_set_sp(src, 0, 0);
+				sc_start(src, src, SC_EXTREMITYFIST, 100, skill_lv, skill_get_time(skill_id, skill_lv));
 				status_change_end(src, SC_EXPLOSIONSPIRITS);
 				status_change_end(src, SC_BLADESTOP);
-#ifdef RENEWAL
-				sc_start(src,src,SC_EXTREMITYFIST2,100,skill_lv,skill_get_time(skill_id,skill_lv));
-#endif
 			} else {
 				status_set_hp(src, 1, 0);
 				status_change_end(src, SC_NEN);
@@ -6284,7 +6286,6 @@ int skill_castend_damage_id (struct block_list* src, struct block_list *bl, uint
 	case KN_BOWLINGBASH:
 		if (flag & 1) {
 			skill_attack(skill_get_type(skill_id), src, src, bl, skill_id, skill_lv, tick, (skill_area_temp[0]) > 0 ? SD_ANIMATION | skill_area_temp[0] : skill_area_temp[0]);
-			skill_blown(src, bl, skill_get_blewcount(skill_id, skill_lv), -1, BLOWN_NONE);
 		} else {
 			skill_area_temp[0] = map_foreachinallrange(skill_area_sub, bl, skill_get_splash(skill_id, skill_lv), BL_CHAR, src, skill_id, skill_lv, tick, BCT_ENEMY, skill_area_sub_count);
 			map_foreachinrange(skill_area_sub, bl, skill_get_splash(skill_id, skill_lv), BL_CHAR|BL_SKILL, src, skill_id, skill_lv, tick, flag | BCT_ENEMY | SD_SPLASH | 1, skill_castend_damage_id);
@@ -8142,6 +8143,7 @@ int skill_castend_nodamage_id (struct block_list *src, struct block_list *bl, ui
 	case SU_TUNAPARTY:
 	case SU_GROOMING:
 	case SU_CHATTERING:
+	case ALL_RAY_OF_PROTECTION:
 		clif_skill_nodamage(bl,bl,skill_id,skill_lv,
 			sc_start(src,bl,type,100,skill_lv,skill_get_time(skill_id,skill_lv)));
 		break;
@@ -8333,6 +8335,7 @@ int skill_castend_nodamage_id (struct block_list *src, struct block_list *bl, ui
 		break;
 
 	case NPC_GRADUAL_GRAVITY:
+	case NPC_DEADLYCURSE:
 		status_change_start(src, bl, type, 10000, skill_lv, 0, 0, 0, skill_get_time(skill_id, skill_lv), SCSTART_NOAVOID|SCSTART_NOTICKDEF|SCSTART_NORATEDEF);
 		clif_skill_nodamage(src, bl, skill_id, skill_lv, 1);
 		break;
@@ -8880,7 +8883,7 @@ int skill_castend_nodamage_id (struct block_list *src, struct block_list *bl, ui
 
 	case AM_PHARMACY:
 		if(sd) {
-			clif_skill_produce_mix_list(sd,skill_id,22);
+			clif_skill_produce_mix_list( *sd, skill_id, 22 );
 			clif_skill_nodamage(src,bl,skill_id,skill_lv,1);
 		}
 		break;
@@ -9909,7 +9912,7 @@ int skill_castend_nodamage_id (struct block_list *src, struct block_list *bl, ui
 				clif_skill_nodamage(nullptr,bl,MG_SRECOVERY,sp,1);
 			if (tsc) {
 #ifdef RENEWAL
-				if (tsc->getSCE(SC_EXTREMITYFIST2))
+				if (tsc->getSCE(SC_EXTREMITYFIST))
 					sp = 0;
 #endif
 				if (tsc->getSCE(SC_NORECOVER_STATE)) {
@@ -10662,7 +10665,7 @@ int skill_castend_nodamage_id (struct block_list *src, struct block_list *bl, ui
 #ifdef	RENEWAL
 			sp1 = sp1 / 2;
 			sp2 = sp2 / 2;
-			if (tsc && tsc->getSCE(SC_EXTREMITYFIST2))
+			if (tsc && tsc->getSCE(SC_EXTREMITYFIST))
 				sp1 = tstatus->sp;
 #endif
 			if (tsc && tsc->getSCE(SC_NORECOVER_STATE))
@@ -11124,6 +11127,7 @@ int skill_castend_nodamage_id (struct block_list *src, struct block_list *bl, ui
 	case NPC_WIDE_DEEP_SLEEP:
 	case NPC_WIDESIREN:
 	case NPC_WIDEWEB:
+	case NPC_DEADLYCURSE2:
 		if (flag&1){
 			switch ( type ) {
 			case SC_BURNING:
@@ -11442,7 +11446,7 @@ int skill_castend_nodamage_id (struct block_list *src, struct block_list *bl, ui
 	case GC_CREATENEWPOISON:
 		if( sd )
 		{
-			clif_skill_produce_mix_list(sd,skill_id,25);
+			clif_skill_produce_mix_list( *sd, skill_id, 25 );
 			clif_skill_nodamage(src, bl, skill_id, skill_lv, 1);
 		}
 		break;
@@ -12627,7 +12631,7 @@ int skill_castend_nodamage_id (struct block_list *src, struct block_list *bl, ui
 			sd->skill_lv_old = skill_lv;
 			if( skill_id != GN_S_PHARMACY && skill_lv > 1 )
 				qty = 10;
-			clif_cooking_list(sd,(skill_id - GN_MIX_COOKING) + 27,skill_id,qty,skill_id==GN_MAKEBOMB?5:6);
+			clif_cooking_list( *sd, ( skill_id - GN_MIX_COOKING ) + 27, skill_id, qty, skill_id == GN_MAKEBOMB ? 5 : 6 );
 			clif_skill_nodamage(src,bl,skill_id,skill_lv,1);
 		}
 		break;
@@ -13356,9 +13360,9 @@ int skill_castend_nodamage_id (struct block_list *src, struct block_list *bl, ui
 			sd->skill_lv_old = skill_lv;
 
 			if (skill_id == MT_M_MACHINE)
-				clif_cooking_list(sd, 31, skill_id, 1, 7);
+				clif_cooking_list( *sd, 31, skill_id, 1, 7 );
 			else // BO_BIONIC_PHARMACY
-				clif_cooking_list(sd, 32, skill_id, 1, 8);
+				clif_cooking_list( *sd, 32, skill_id, 1, 8 );
 			clif_skill_nodamage(src, bl, skill_id, skill_lv, 1);
 		}
 		break;
@@ -14070,15 +14074,9 @@ TIMER_FUNC(skill_castend_id){
 		//Consume SP/spheres
 		skill_consume_requirement(sd,ud->skill_id, ud->skill_lv,1);
 		status_set_sp(src, 0, 0);
-		sc = &sd->sc;
-		if (sc->count)
-		{	//End states
-			status_change_end(src, SC_EXPLOSIONSPIRITS);
-			status_change_end(src, SC_BLADESTOP);
-#ifdef RENEWAL
-			sc_start(src,src, SC_EXTREMITYFIST2, 100, ud->skill_lv, skill_get_time(ud->skill_id, ud->skill_lv));
-#endif
-		}
+		sc_start(src, src, SC_EXTREMITYFIST, 100, ud->skill_lv, skill_get_time(ud->skill_id, ud->skill_lv));
+		status_change_end(src, SC_EXPLOSIONSPIRITS);
+		status_change_end(src, SC_BLADESTOP);
 		if( target && target->m == src->m ) { //Move character to target anyway.
 			short x, y;
 			short dir = map_calc_dir(src,target->x,target->y);
@@ -20720,9 +20718,7 @@ int skill_frostjoke_scream(struct block_list *bl, va_list ap)
 			return 0;//Frost Joke / Scream cannot target invisible or MADO Gear characters [Ind]
 	}
 	//It has been reported that Scream/Joke works the same regardless of woe-setting. [Skotlex]
-	if(battle_check_target(src,bl,BCT_ENEMY) > 0)
-		skill_additional_effect(src,bl,skill_id,skill_lv,BF_MISC,ATK_DEF,tick);
-	else if(battle_check_target(src,bl,BCT_PARTY) > 0 && rnd()%100 < 10)
+	if(battle_check_target(src,bl,BCT_ENEMY|BCT_PARTY) > 0)
 		skill_additional_effect(src,bl,skill_id,skill_lv,BF_MISC,ATK_DEF,tick);
 
 	return 0;

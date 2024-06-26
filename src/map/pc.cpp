@@ -2384,11 +2384,11 @@ void pc_reg_received(map_session_data *sd)
 	}
 
 	if (sd->status.party_id > 0)
-		party_member_joined(sd);
+		party_member_joined( *sd );
 	if (sd->status.guild_id > 0)
 		guild_member_joined(sd);
 	if (sd->status.clan_id > 0)
-		clan_member_joined(sd);
+		clan_member_joined( *sd );
 #if !( PACKETVER_MAIN_NUM >= 20190403 || PACKETVER_RE_NUM >= 20190320 || PACKETVER_ZERO_NUM >= 20190410 )
 	// Before those clients you could send out the instance info even when the client was still loading the map, afterwards you need to send it later
 	clif_instance_info( *sd );
@@ -10623,7 +10623,7 @@ int pc_itemheal(map_session_data *sd, t_itemid itemid, int hp, int sp)
 		}
 
 #ifdef RENEWAL
-		if (sd->sc.getSCE(SC_EXTREMITYFIST2))
+		if (sd->sc.getSCE(SC_EXTREMITYFIST))
 			sp = 0;
 #endif
 		if (sd->sc.getSCE(SC_BITESCAR))
@@ -15524,7 +15524,7 @@ static void pc_macro_punishment(map_session_data &sd, e_macro_detect_status styp
  * @param image_size: Captcha image size
  * @param captcha_answer: Answer to captcha
  */
-void pc_macro_captcha_register(map_session_data &sd, uint16 image_size, char captcha_answer[CAPTCHA_ANSWER_SIZE]) {
+void pc_macro_captcha_register(map_session_data &sd, uint16 image_size, const char captcha_answer[CAPTCHA_ANSWER_SIZE]) {
 	nullpo_retv(captcha_answer);
 
 	sd.captcha_upload.cd = nullptr;
@@ -15553,7 +15553,7 @@ void pc_macro_captcha_register(map_session_data &sd, uint16 image_size, char cap
  * @param upload_size: Captcha size
  * @param upload_data: Image data
  */
-void pc_macro_captcha_register_upload(map_session_data &sd, uint16 upload_size, char *upload_data) {
+void pc_macro_captcha_register_upload(map_session_data &sd, uint16 upload_size, const char *upload_data) {
 	nullpo_retv(upload_data);
 
 	memcpy(&sd.captcha_upload.cd->image_data[sd.captcha_upload.upload_size], upload_data, upload_size);
@@ -15620,7 +15620,7 @@ TIMER_FUNC(pc_macro_detector_timeout) {
  * @param sd: Player data
  * @param captcha_answer: Captcha answer entered by player
  */
-void pc_macro_detector_process_answer(map_session_data &sd, char captcha_answer[CAPTCHA_ANSWER_SIZE]) {
+void pc_macro_detector_process_answer(map_session_data &sd, const char captcha_answer[CAPTCHA_ANSWER_SIZE]) {
 	nullpo_retv(captcha_answer);
 
 	const std::shared_ptr<s_captcha_data> cd = sd.macro_detect.cd;

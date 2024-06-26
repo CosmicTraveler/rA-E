@@ -846,15 +846,14 @@ int intif_guild_request_info(int guild_id)
  * @param m : Member to add to the guild
  * @return 0=error, 1=msg_sent
  */
-int intif_guild_addmember(int guild_id,struct guild_member *m)
-{
+int intif_guild_addmember( int guild_id, struct guild_member& m ){
 	if (CheckForCharServer())
 		return 0;
 	WFIFOHEAD(inter_fd,sizeof(struct guild_member)+8);
 	WFIFOW(inter_fd,0) = 0x3032;
 	WFIFOW(inter_fd,2) = sizeof(struct guild_member)+8;
 	WFIFOL(inter_fd,4) = guild_id;
-	memcpy(WFIFOP(inter_fd,8),m,sizeof(struct guild_member));
+	memcpy( WFIFOP( inter_fd, 8 ), &m, sizeof( struct guild_member ) );
 	WFIFOSET(inter_fd,WFIFOW(inter_fd,2));
 	return 1;
 }
@@ -866,16 +865,16 @@ int intif_guild_addmember(int guild_id,struct guild_member *m)
  * @param len : size of the name
  * @return 0=error, 1=msg_sent
  */
-int intif_guild_change_gm( int guild_id, const char* name, size_t len ){
+bool intif_guild_change_gm( int guild_id, const char* name, size_t len ){
 	if (CheckForCharServer())
-		return 0;
+		return false;
 	WFIFOHEAD(inter_fd, len + 8);
 	WFIFOW(inter_fd, 0)=0x3033;
 	WFIFOW( inter_fd, 2 ) = static_cast<int16>( len + 8 );
 	WFIFOL(inter_fd, 4)=guild_id;
 	safestrncpy(WFIFOCP(inter_fd,8),name,len);
 	WFIFOSET(inter_fd,len+8);
-	return 1;
+	return true;
 }
 
 /**
@@ -887,10 +886,9 @@ int intif_guild_change_gm( int guild_id, const char* name, size_t len ){
  * @param mes : quitting message (max 40)
  * @return 0=error, 1=msg_sent
  */
-int intif_guild_leave(int guild_id,uint32 account_id,uint32 char_id,int flag,const char *mes)
-{
+bool intif_guild_leave( int guild_id, uint32 account_id, uint32 char_id, int flag, const char *mes ){
 	if (CheckForCharServer())
-		return 0;
+		return false;
 	WFIFOHEAD(inter_fd, 55);
 	WFIFOW(inter_fd, 0) = 0x3034;
 	WFIFOL(inter_fd, 2) = guild_id;
@@ -899,7 +897,7 @@ int intif_guild_leave(int guild_id,uint32 account_id,uint32 char_id,int flag,con
 	WFIFOB(inter_fd,14) = flag;
 	safestrncpy(WFIFOCP(inter_fd,15),mes,40);
 	WFIFOSET(inter_fd,55);
-	return 1;
+	return true;
 }
 
 /**
@@ -3686,7 +3684,7 @@ void intif_parse_clans( int fd ){
 	clan_load_clandata( ( RFIFOW(fd, 2) - 4 ) / sizeof( struct clan ), (struct clan*)RFIFOP(fd,4) );
 }
 
-int intif_clan_message(int clan_id,uint32 account_id,const char *mes,int len){
+int intif_clan_message( int clan_id, uint32 account_id, const char *mes, size_t len ){
 	if (CheckForCharServer())
 		return 0;
 
@@ -3695,7 +3693,7 @@ int intif_clan_message(int clan_id,uint32 account_id,const char *mes,int len){
 
 	WFIFOHEAD(inter_fd, len + 12);
 	WFIFOW(inter_fd,0)=0x30A1;
-	WFIFOW(inter_fd,2)=len+12;
+	WFIFOW( inter_fd, 2 ) = static_cast<uint16>( len + 12 );
 	WFIFOL(inter_fd,4)=clan_id;
 	WFIFOL(inter_fd,8)=account_id;
 	safestrncpy(WFIFOCP(inter_fd,12),mes,len);
@@ -3749,7 +3747,7 @@ int intif_parse_clan_onlinecount( int fd ){
 
 	clan->connect_member = RFIFOW(fd,6);
 
-	clif_clan_onlinecount(clan);
+	clif_clan_onlinecount( *clan );
 
 	return 1;
 }
