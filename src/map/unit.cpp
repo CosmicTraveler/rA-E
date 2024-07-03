@@ -3154,7 +3154,7 @@ int unit_remove_map_(struct block_list *bl, clr_type clrtype, const char* file, 
 			if(sd->trade_partner)
 				trade_tradecancel(sd);
 
-			searchstore_close(sd);
+			searchstore_close(*sd);
 
 			if (sd->menuskill_id != AL_TELEPORT) { //bugreport:8027
 				if (sd->state.storage_flag == 1)
