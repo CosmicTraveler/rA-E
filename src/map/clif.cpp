@@ -180,7 +180,7 @@ static inline void WBUFPOS(uint8* p, unsigned short pos, short x, short y, unsig
 
 
 // client-side: x0+=sx0*0.0625-0.5 and y0+=sy0*0.0625-0.5
-static inline void WBUFPOS2(uint8* p, unsigned short pos, short x0, short y0, short x1, short y1, unsigned char sx0, unsigned char sy0) {
+static inline void WBUFPOS2(uint8* p, unsigned short pos, short x0, short y0, short x1, short y1, uint8 sx0, uint8 sy0) {
 	p += pos;
 	p[0] = (uint8)(x0>>2);
 	p[1] = (uint8)((x0<<6) | ((y0>>4)&0x3f));
@@ -1436,7 +1436,7 @@ static void clif_set_unit_walking( struct block_list& bl, map_session_data* tsd,
 	p.virtue = (sc) ? sc->opt3 : 0;
 	p.isPKModeON = (sd && sd->status.karma) ? 1 : 0;
 	p.sex = vd->sex;
-	WBUFPOS2( &p.MoveData[0], 0, bl.x, bl.y, ud.to_x, ud.to_y, 8, 8 );
+	WBUFPOS2(&p.MoveData[0], 0, bl.x, bl.y, ud.to_x, ud.to_y, ud.sx, ud.sy);
 	p.xSize = p.ySize = (sd) ? 5 : 0;
 	p.clevel = clif_setlevel( &bl );
 #if PACKETVER >= 20080102
@@ -1698,7 +1698,7 @@ int clif_spawn( struct block_list *bl, bool walking ){
 			if (sd->spiritball > 0)
 				clif_spiritball(&sd->bl);
 			if (sd->sc.getSCE(SC_MILLENNIUMSHIELD))
-				clif_millenniumshield(&sd->bl, sd->sc.getSCE(SC_MILLENNIUMSHIELD)->val2);
+				clif_millenniumshield( sd->bl, sd->sc.getSCE( SC_MILLENNIUMSHIELD )->val2 );
 			if (sd->soulball > 0)
 				clif_soulball(sd);
 			if (sd->servantball > 0)
@@ -1712,7 +1712,7 @@ int clif_spawn( struct block_list *bl, bool walking ){
 			if( sd->bg_id && map_getmapflag(sd->bl.m, MF_BATTLEGROUND) )
 				clif_sendbgemblem_area(sd);
 			if (sd->spiritcharm_type != CHARM_TYPE_NONE && sd->spiritcharm > 0)
-				clif_spiritcharm(sd);
+				clif_spiritcharm( *sd );
 			if (sd->status.robe)
 				clif_refreshlook(bl,bl->id,LOOK_ROBE,sd->status.robe,AREA);
 			clif_efst_status_change_sub(bl, bl, AREA);
@@ -7674,15 +7674,12 @@ void clif_buyvending( map_session_data& sd, uint16 index, uint16 amount, e_pc_pu
 
 /// Show's vending player its list of items for sale.
 /// 0a28 <result>.B (ZC_ACK_OPENSTORE2)
-/// result:
-///     0 = Success
-///     1 = Failed
-void clif_openvending_ack( map_session_data& sd, bool failure ){
+void clif_openvending_ack( map_session_data& sd, e_ack_openstore2 result ){
 #if PACKETVER >= 20141022
 	PACKET_ZC_ACK_OPENSTORE2 packet{};
 
 	packet.packetType = HEADER_ZC_ACK_OPENSTORE2;
-	packet.result = failure;
+	packet.result = static_cast<decltype(packet.result)>(result);
 
 	clif_send( &packet, sizeof( packet ), &sd.bl, SELF );
 #endif
@@ -7722,7 +7719,7 @@ void clif_openvending( map_session_data& sd ){
 
 	clif_send( p, p->packetLength, &sd.bl, SELF );
 
-	clif_openvending_ack( sd, false );
+	clif_openvending_ack( sd, OPENSTORE2_SUCCESS );
 }
 
 
@@ -19148,6 +19145,9 @@ void clif_buyingstore_trade_failed_seller( map_session_data* sd, short result, t
 ///         amount of card slots. If the client does not know about the item it
 ///         cannot be searched.
 static void clif_parse_SearchStoreInfo( int fd, map_session_data *sd ){
+	if (!battle_config.feature_search_stores)
+		return;
+
 	const PACKET_CZ_SEARCH_STORE_INFO* p = reinterpret_cast<PACKET_CZ_SEARCH_STORE_INFO*>( RFIFOP( fd, 0 ) );
 
 	// minimum packet length
@@ -19200,6 +19200,9 @@ static void clif_parse_SearchStoreInfo( int fd, map_session_data *sd ){
 ///     1 = "next" label to retrieve more results
 void clif_search_store_info_ack( map_session_data& sd ){
 #if PACKETVER_MAIN_NUM >= 20100817 || PACKETVER_RE_NUM >= 20100706 || defined(PACKETVER_ZERO)
+	if (!battle_config.feature_search_stores)
+		return;
+
 	uint32 start = sd.searchstore.pages * SEARCHSTORE_RESULTS_PER_PAGE ;
 	uint32 end = umin( static_cast<uint32>( sd.searchstore.items.size() ), start + SEARCHSTORE_RESULTS_PER_PAGE );
 
@@ -19260,6 +19263,9 @@ void clif_search_store_info_ack( map_session_data& sd ){
 /// 0837 <reason>.B (ZC_SEARCH_STORE_INFO_FAILED)
 void clif_search_store_info_failed(map_session_data& sd, e_searchstore_failure reason){
 #if PACKETVER_MAIN_NUM >= 20100601 || PACKETVER_RE_NUM >= 20100601 || defined(PACKETVER_ZERO)
+	if (!battle_config.feature_search_stores)
+		return;
+
 	PACKET_ZC_SEARCH_STORE_INFO_FAILED packet{};
 
 	packet.packetType = HEADER_ZC_SEARCH_STORE_INFO_FAILED;
@@ -19272,8 +19278,10 @@ void clif_search_store_info_failed(map_session_data& sd, e_searchstore_failure r
 
 /// Request to display next page of results.
 /// 0838  (CZ_SEARCH_STORE_INFO_NEXT_PAGE)
-static void clif_parse_SearchStoreInfoNextPage(int fd, map_session_data* sd)
-{
+static void clif_parse_SearchStoreInfoNextPage(int fd, map_session_data* sd){
+	if (!battle_config.feature_search_stores)
+		return;
+
 	searchstore_next(*sd);
 }
 
@@ -19282,6 +19290,9 @@ static void clif_parse_SearchStoreInfoNextPage(int fd, map_session_data* sd)
 /// 083a <effect>.W <remaining uses>.B (ZC_OPEN_SEARCH_STORE_INFO)
 void clif_open_search_store_info(map_session_data& sd){
 #if PACKETVER_MAIN_NUM >= 20100701 || PACKETVER_RE_NUM >= 20100701 || defined(PACKETVER_ZERO)
+	if (!battle_config.feature_search_stores)
+		return;
+
 	PACKET_ZC_OPEN_SEARCH_STORE_INFO packet{};
 
 	packet.packetType = HEADER_ZC_OPEN_SEARCH_STORE_INFO;
@@ -19297,8 +19308,10 @@ void clif_open_search_store_info(map_session_data& sd){
 
 /// Request to close the store search window.
 /// 083b (CZ_CLOSE_SEARCH_STORE_INFO)
-static void clif_parse_CloseSearchStoreInfo(int fd, map_session_data* sd)
-{
+static void clif_parse_CloseSearchStoreInfo(int fd, map_session_data* sd){
+	if (!battle_config.feature_search_stores)
+		return;
+
 	searchstore_close(*sd);
 }
 
@@ -19306,6 +19319,9 @@ static void clif_parse_CloseSearchStoreInfo(int fd, map_session_data* sd)
 /// Request to invoke catalog effect on a store from search results.
 /// 083c <account id>.L <store id>.L <nameid>.W (CZ_SSILIST_ITEM_CLICK)
 static void clif_parse_SearchStoreInfoListItemClick( int fd, map_session_data* sd ){
+	if (!battle_config.feature_search_stores)
+		return;
+
 	const PACKET_CZ_SSILIST_ITEM_CLICK* p = reinterpret_cast<PACKET_CZ_SSILIST_ITEM_CLICK*>( RFIFOP( fd, 0 ) );
 
 	searchstore_click( *sd, p->AID, p->storeId, p->itemId );
@@ -19316,6 +19332,9 @@ static void clif_parse_SearchStoreInfoListItemClick( int fd, map_session_data* s
 /// 083d <xPos>.W <yPos>.W (ZC_SSILIST_ITEM_CLICK_ACK)
 void clif_search_store_info_click_ack(map_session_data& sd, int16 x, int16 y){
 #if PACKETVER_MAIN_NUM >= 20100608 || PACKETVER_RE_NUM >= 20100608 || defined(PACKETVER_ZERO)
+	if (!battle_config.feature_search_stores)
+		return;
+
 	PACKET_ZC_SSILIST_ITEM_CLICK_ACK packet{};
 
 	packet.packetType = HEADER_ZC_SSILIST_ITEM_CLICK_ACK;
@@ -19386,15 +19405,16 @@ void clif_elementalconverter_list( map_session_data& sd ){
 /**
  * Rune Knight
  **/
-void clif_millenniumshield(struct block_list *bl, short shields) {
-#if PACKETVER >= 20081217
-	unsigned char buf[10];
+void clif_millenniumshield( block_list& bl, int16 shields ){
+#if PACKETVER >= 20081126
+	PACKET_ZC_MILLENNIUMSHIELD packet{};
 
-	WBUFW(buf,0) = 0x440;
-	WBUFL(buf,2) = bl->id;
-	WBUFW(buf,6) = shields;
-	WBUFW(buf,8) = 0;
-	clif_send(buf,packet_len(0x440),bl,AREA);
+	packet.packetType = HEADER_ZC_MILLENNIUMSHIELD;
+	packet.aid = bl.id;
+	packet.num = shields;
+	packet.state = 0;
+
+	clif_send( &packet, sizeof( packet ), &bl, AREA );
 #endif
 }
 
@@ -19550,18 +19570,19 @@ void clif_parse_SkillSelectMenu(int fd, map_session_data *sd) {
 }
 
 
-/// Kagerou/Oboro amulet spirit (ZC_SPIRITS_ATTRIBUTE).
-/// 08cf <id>.L <type>.W <num>.W
-void clif_spiritcharm(map_session_data *sd) {
-	unsigned char buf[10];
+/// Kagerou/Oboro amulet spirit.
+/// 08cf <id>.L <type>.W <num>.W (ZC_SPIRITS_ATTRIBUTE)
+void clif_spiritcharm( map_session_data& sd ){
+#if PACKETVER >= 20111102
+	PACKET_ZC_SPIRITS_ATTRIBUTE packet{};
 
-	nullpo_retv(sd);
+	packet.packetType = HEADER_ZC_SPIRITS_ATTRIBUTE;
+	packet.aid = sd.bl.id;
+	packet.spiritsType = static_cast<decltype(packet.spiritsType)>(sd.spiritcharm_type);
+	packet.num = static_cast<decltype(packet.num)>(sd.spiritcharm);
 
-	WBUFW(buf,0) = 0x08cf;
-	WBUFL(buf,2) = sd->bl.id;
-	WBUFW(buf,6) = sd->spiritcharm_type;
-	WBUFW(buf,8) = sd->spiritcharm;
-	clif_send(buf, packet_len(0x08cf), &sd->bl, AREA);
+	clif_send( &packet, sizeof( packet ), &sd.bl, AREA );
+#endif
 }
 
 
