@@ -1273,6 +1273,10 @@ void party_exp_share(struct party_data* p, struct block_list* src, t_exp base_ex
 	}
 
 	for (i = 0; i < c; i++) {
+
+		if(sd[i]->state.autotrade || sd[i]->state.vending || sd[i]->sc.getSCE(SC_TRICKDEAD))
+			continue;
+
 #ifdef RENEWAL_EXP
 		t_exp base_gained = base_exp, job_gained = job_exp;
 		if (base_exp || job_exp) {

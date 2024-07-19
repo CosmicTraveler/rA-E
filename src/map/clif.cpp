@@ -22198,6 +22198,24 @@ void clif_parse_refineui_add( int fd, map_session_data* sd ){
 #endif
 }
 
+static void boardcast_refine_message(map_session_data* sd, struct item& item, bool is_success)
+{
+	nullpo_retv(sd);
+
+	std::shared_ptr<item_data> id = item_db.find(item.nameid);
+
+	char msg[CHAT_SIZE_MAX];
+	memset(msg, '\0', sizeof(msg));
+
+	if(is_success && item.refine >= battle_config.refine_succes_announce){
+		sprintf(msg,msg_txt(sd,1541),sd->status.name,item_db.create_item_link(item).c_str());
+		intif_broadcast2(msg, (int)strlen(msg)+1, 0x00ffff, FW_NORMAL, 12, 0, 0);
+	} else if (!is_success && item.refine >= battle_config.refine_fail_announce) {
+		sprintf(msg,msg_txt(sd,1542),sd->status.name,item_db.create_item_link(item).c_str());
+		intif_broadcast2(msg, (int)strlen(msg)+1, 0xff0000, FW_NORMAL, 12, 0, 0);
+	}
+}
+
 /**
  * Client requests to try to refine an item.
  * 0aa3 <index>.W <material>.W <catalyst>.B
@@ -22324,19 +22342,14 @@ void clif_parse_refineui_refine( int fd, map_session_data* sd ){
 		log_pick_pc( sd, LOG_TYPE_OTHER, 1, item );
 		clif_misceffect( sd->bl, NOTIFYEFFECT_REFINE_SUCCESS );
 		clif_refine( *sd, index, ITEMREFINING_SUCCESS );
-		if (info->broadcast_success) {
-			clif_broadcast_refine_result(*sd, item->nameid, item->refine, true);
-		}
+		boardcast_refine_message(sd, *item, true);
 		if( id->type == IT_WEAPON ){
 			achievement_update_objective( sd, AG_ENCHANT_SUCCESS, 2, id->weapon_level, item->refine );
 		}
 		clif_refineui_info( sd, index );
 	}else{
 		// Failure
-
-		if (info->broadcast_failure) {
-			clif_broadcast_refine_result(*sd, item->nameid, item->refine, false);
-		}
+		boardcast_refine_message(sd, *item, false);
 		// Blacksmith blessings were used to prevent breaking and downgrading
 		if( blacksmith_amount > 0 ){
 			clif_refine( *sd, index, ITEMREFINING_FAILURE2 );

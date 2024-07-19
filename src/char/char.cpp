@@ -1420,7 +1420,7 @@ int char_make_new_char( struct char_session_data* sd, char* name_, int str, int 
 	int status_points;
 
 	safestrncpy(name, name_, NAME_LENGTH);
-	normalize_name(name,TRIM_CHARS);
+	// normalize_name(name,TRIM_CHARS);
 	Sql_EscapeStringLen(sql_handle, esc_name, name, strnlen(name, NAME_LENGTH));
 
 	memset( tmp_start_point, 0, sizeof( tmp_start_point ) );

@@ -1353,7 +1353,7 @@ int chclif_parse_reqrename( int fd, struct char_session_data* sd ){
 	if( i == MAX_CHARS )
 		return 1;
 
-	normalize_name(name,TRIM_CHARS);
+	// normalize_name(name,TRIM_CHARS);
 	Sql_EscapeStringLen(sql_handle, esc_name, name, strnlen(name, NAME_LENGTH));
 	if( !char_check_char_name(name,esc_name) ) {
 		i = 1;
@@ -1472,7 +1472,7 @@ int chclif_parse_ackrename(int fd, struct char_session_data* sd){
 		if (i == MAX_CHARS)
 			return 1;
 
-		normalize_name(name, TRIM_CHARS);
+		// normalize_name(name, TRIM_CHARS);
 		Sql_EscapeStringLen(sql_handle, esc_name, name, strnlen(name, NAME_LENGTH));
 
 		safestrncpy(sd->new_name, name, NAME_LENGTH);

@@ -763,6 +763,9 @@ struct Battle_Config
 	int synchronize_damage;
 	int item_stacking;
 
+	int refine_succes_announce;
+	int refine_fail_announce;
+
 #include <custom/battle_config_struct.inc>
 };
 

@@ -2592,7 +2592,7 @@ int mob_getdroprate(struct block_list *src, std::shared_ptr<s_mob_db> mob, int b
 			drop_rate = (int)( 0.5 + drop_rate * drop_rate_bonus / 100. );
 
 			// Now limit the drop rate to never be exceed the cap (default: 90%), unless it is originally above it already.
-			if( drop_rate > cap && base_rate < cap ){
+			if( drop_rate > cap ){
 				drop_rate = cap;
 			}
 		}

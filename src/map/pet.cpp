@@ -1473,7 +1473,7 @@ int pet_change_name_ack(map_session_data *sd, char* name, int flag)
 	if (!pd)
 		return 0;
 
-	normalize_name(name," ");//bugreport:3032
+	// normalize_name(name," ");//bugreport:3032
 
 	if ( !flag || !strlen(name) ) {
 		clif_displaymessage(sd->fd, msg_txt(sd,280)); // You cannot use this name for your pet.

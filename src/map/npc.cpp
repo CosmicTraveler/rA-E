@@ -3609,11 +3609,8 @@ void npc_delsrcfile(const char* name)
  * Load all npc files
  */
 void npc_loadsrcfiles() {
-	ShowStatus("Loading NPCs...\n");
+	// ShowStatus("Loading NPCs...\n");
 	for (const auto& file : npc_src_files) {
-#ifdef DETAILED_LOADING_OUTPUT
-		ShowStatus("Loading NPC file: %s" CL_CLL "\r", file.c_str());
-#endif
 		npc_parsesrcfile(file.c_str());
 	}
 	int npc_total = npc_warp + npc_shop + npc_script;

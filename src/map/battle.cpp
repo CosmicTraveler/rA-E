@@ -11529,6 +11529,9 @@ static const struct _battle_data {
 #endif
 	{ "synchronize_damage",                 &battle_config.synchronize_damage,              0,      0,      1,              },
 	{ "item_stacking",                      &battle_config.item_stacking,                   1,      0,      1,              },
+	
+	{ "refine_succes_announce",				&battle_config.refine_succes_announce,			0,      0,      MAX_REFINE,     },
+	{ "refine_fail_announce",				&battle_config.refine_fail_announce,			0,      0,      MAX_REFINE,     },
 
 #include <custom/battle_config_init.inc>
 };

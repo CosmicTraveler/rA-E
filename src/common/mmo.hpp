@@ -129,15 +129,9 @@ enum e_enchantgrade : uint16{
 	ENCHANTGRADE_A
 };
 
-#ifdef RENEWAL
-	#define MAX_WEAPON_LEVEL 5
-	#define MAX_ARMOR_LEVEL 2
-	#define MAX_ENCHANTGRADE ENCHANTGRADE_A
-#else
-	#define MAX_WEAPON_LEVEL 4
-	#define MAX_ARMOR_LEVEL 1
-	#define MAX_ENCHANTGRADE ENCHANTGRADE_NONE
-#endif
+#define MAX_WEAPON_LEVEL 5
+#define MAX_ARMOR_LEVEL 2
+#define MAX_ENCHANTGRADE ENCHANTGRADE_A
 
 // for produce
 #define MIN_ATTRIBUTE 0
