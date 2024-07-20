@@ -19130,6 +19130,21 @@ bool skill_check_condition_castbegin( map_session_data& sd, uint16 skill_id, uin
 		}
 	}
 
+	if( require.sp > 0 && status->sp < (unsigned int)require.sp) {
+		clif_skill_fail( sd, skill_id, USESKILL_FAIL_SP_INSUFFICIENT );
+		return false;
+	}
+
+	if (require.ap > 0 && status->ap < (unsigned int)require.ap) {
+		clif_skill_fail( sd, skill_id, USESKILL_FAIL_AP_INSUFFICIENT );
+		return false;
+	}
+
+	if( require.zeny > 0 && sd.status.zeny < require.zeny ) {
+		clif_skill_fail( sd, skill_id, USESKILL_FAIL_MONEY );
+		return false;
+	}
+
 	if (require.spiritball > 0) { // Skills that require certain types of spheres to use.
 		switch (skill_id) { // Skills that require soul spheres.
 			case SP_SOULGOLEM:
