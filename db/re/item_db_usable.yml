@@ -9076,12 +9076,11 @@ Body:
     AegisName: Vulcan_Bullet_Magazine
     Name: Vulcan Bullet Magazine
     Type: Usable
-    Buy: 11000
     Weight: 500
     Flags:
       BuyingStore: true
     Script: |
-      getitem 6145,1000;
+      getitem 6145,500;
   - Id: 12384
     AegisName: Rainbow_Ruby_Water
     Name: Rainbow Ruby
