@@ -4147,8 +4147,6 @@ int64 skill_attack (int32 attack_type, struct block_list* src, struct block_list
 				}
 				break;
 		}
-		if( sd )
-			skill_onskillusage(sd, bl, skill_id, tick);
 	}
 
 	if (!(flag&2)) {
@@ -7510,7 +7508,7 @@ int32 skill_castend_damage_id (struct block_list* src, struct block_list *bl, ui
 		{// consume arrow on last invocation to this skill.
 			battle_consume_ammo(sd, skill_id, skill_lv);
 		}
-
+		skill_onskillusage(sd, bl, skill_id, tick);
 		// perform skill requirement consumption
 		if (!(flag&SKILL_NOCONSUME_REQ))
 			skill_consume_requirement(sd,skill_id,skill_lv,2);
@@ -19702,7 +19700,7 @@ void skill_consume_requirement(map_session_data *sd, uint16 skill_id, uint16 ski
 				[[fallthrough]];
 			default:
 				if(sd->state.autocast)
-					require.sp = 0;
+					require.sp = require.ap = 0;
 			break;
 		}
 		if(require.hp || require.sp || require.ap)

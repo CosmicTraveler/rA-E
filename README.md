@@ -13,3 +13,5 @@
   * เพิ่มประกาศตีบวกแบบ itemlink
   * แก้ไขเรื่อง DEF ล้นจนติดลบ (หาย) (ใน Pre-renewal)
   * ปรับให้ระบบ Grade สามารถใช้งานกับ Pre-renewal ได้
+  * แก้ Autospell เพี้ยน (Combo)
+  * แก้ Autospell กิน AP
