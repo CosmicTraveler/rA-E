@@ -42,7 +42,10 @@
 
 #define DBIMPORT "import"
 
-typedef short defType;
+/**
+ * DefType
+ **/
+typedef int16 defType;
 #define DEFTYPE_MIN SHRT_MIN
 #define DEFTYPE_MAX SHRT_MAX
 
