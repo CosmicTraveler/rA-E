@@ -283,7 +283,6 @@ struct Battle_Config
 	int32 natural_healsp_interval;
 	int32 natural_heal_skill_interval;
 	int32 natural_heal_weight_rate;
-	int32 natural_heal_weight_rate_renewal;
 	int32 arrow_decrement;
 	int32 ammo_unequip;
 	int32 ammo_check_weapon;
@@ -432,7 +431,9 @@ struct Battle_Config
 	int32 exp_calc_type;
 	int32 exp_bonus_attacker;
 	int32 exp_bonus_max_attacker;
+	int32 exp_bonus_nodamage_attacker;
 	int32 min_skill_delay_limit;
+	int32 amotion_min_skill_delay;
 	int32 default_walk_delay;
 	int32 no_skill_delay;
 	int32 attack_walk_delay;
@@ -770,6 +771,8 @@ struct Battle_Config
 	int32 alchemist_summon_setting;
 	int32 loot_range;
 	int32 assist_range;
+	int32 open_box_weight_rate;
+	int32 major_overweight_rate;
 
 	int refine_succes_announce;
 	int refine_fail_announce;
