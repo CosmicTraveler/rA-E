@@ -1651,7 +1651,7 @@
 	export_constant(SC_ENTRY_QUEUE_APPLY_DELAY);
 	export_constant(SC_ENTRY_QUEUE_NOTIFY_ADMISSION_TIME_OUT);
 	export_constant(SC_ADAPTATION);
-	export_constant(SC_BASILICA_CELL);
+	export_deprecated_constant(SC_BASILICA_CELL); // Apr. 2025
 	export_constant(SC_LIGHTOFMOON);
 	export_constant(SC_LIGHTOFSUN);
 	export_constant(SC_LIGHTOFSTAR);
@@ -1972,6 +1972,7 @@
 	export_constant(SC_SBUNSHIN);
 	export_constant(SC_CONTENTS_34);
 	export_constant(SC_CONTENTS_35);
+	export_constant(SC_NOACTION);
 
 /// Do not modify code below this, until the end of the API hook, since it will be automatically generated again
 /// @APIHOOK_START(EFST_CONST)
