@@ -1,5 +1,8 @@
 ## Custom rAthena Emulator
 
+* Master commit : Poison React (cf94ed8) : https://github.com/rathena/rathena/commit/cf94ed8af1b7bcd9e93120179543c5e6c67ff42f
+
+
 * [X] ระบบพื้นฐาน
 
   * เปิดความเร็วในการอ่านไฟล์ YML (รันเซิร์ฟไวขึ้น)
