@@ -147,3 +147,7 @@ Thumbs.db
 
 # generated files
 generated
+
+old_patch
+patches
+db/custom
