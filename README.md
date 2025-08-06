@@ -1,5 +1,7 @@
 ## Custom rAthena Emulator
 
+* Master commit : Fixed status_change memory leak (ad04a42) : https://github.com/rathena/rathena/commit/ad04a42115ed889f064fcfcb654ef89e56ed45cc
+
 * [X] ระบบพื้นฐาน
 
   * เปิดความเร็วในการอ่านไฟล์ YML (รันเซิร์ฟไวขึ้น)
