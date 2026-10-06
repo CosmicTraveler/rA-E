@@ -149,3 +149,5 @@ Thumbs.db
 
 # generated files
 generated
+
+db/custom

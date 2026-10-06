@@ -1,6 +1,6 @@
 ## Custom rAthena Emulator
 
-* Master commit : Fix auto spell that cast back stab (d4b8e7b) : https://github.com/rathena/rathena/commit/d4b8e7b8f16061cc2496d377ac8f777ce72a4f39
+* Master commit : Remove duplicate Trade block from Sinulog Hat (d4b8e7b) : https://github.com/rathena/rathena/commit/d4b8e7b8f16061cc2496d377ac8f777ce72a4f39
 
 
 * [X] ระบบพื้นฐาน
