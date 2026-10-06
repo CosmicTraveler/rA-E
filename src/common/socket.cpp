@@ -378,7 +378,7 @@ int32 recv_to_fifo(int32 fd)
 	len = sRecv(fd, (char *) session[fd]->rdata + session[fd]->rdata_size, (int32)RFIFOSPACE(fd), 0);
 
 	if( len == SOCKET_ERROR )
-	{//An exception has occured
+	{//An exception has occurred
 		if( sErrno != S_EWOULDBLOCK ) {
 			//ShowDebug("recv_to_fifo: %s, closing connection #%d\n", error_msg(), fd);
 			set_eof(fd);
@@ -418,7 +418,7 @@ int32 send_from_fifo(int32 fd)
 	len = sSend(fd, (const char *) session[fd]->wdata, (int32)session[fd]->wdata_size, MSG_NOSIGNAL);
 
 	if( len == SOCKET_ERROR )
-	{//An exception has occured
+	{//An exception has occurred
 		if( sErrno != S_EWOULDBLOCK ) {
 			//ShowDebug("send_from_fifo: %s, ending connection #%d\n", error_msg(), fd);
 #ifdef SHOW_SERVER_STATS
@@ -1635,12 +1635,34 @@ bool session_isActive(int32 fd)
 	return ( session_isValid(fd) && !session[fd]->flag.eof );
 }
 
+#ifdef HAVE_GETADDRINFO
+uint32_t host2ip(const char* hostname)
+{
+    struct addrinfo hints, *res;
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_INET;  // IPv4 address
+    hints.ai_socktype = SOCK_STREAM;
+
+    int32 err = getaddrinfo(hostname, nullptr, &hints, &res);
+    if (err != 0 || res == nullptr)
+    {
+        return 0;  // Return 0 if there's an error resolving the hostname
+    }
+
+    struct sockaddr_in* sockaddr_in = reinterpret_cast<struct sockaddr_in *>(res->ai_addr);
+    uint32_t ip = ntohl(sockaddr_in->sin_addr.s_addr);
+    freeaddrinfo(res);  // Don't forget to free the memory used by getaddrinfo
+
+    return ip;
+}
+#else
 // Resolves hostname into a numeric ip.
 uint32 host2ip(const char* hostname)
 {
 	struct hostent* h = gethostbyname(hostname);
 	return (h != nullptr) ? ntohl(*(uint32*)h->h_addr) : 0;
 }
+#endif
 
 // Converts a numeric ip into a dot-formatted string.
 // Result is placed either into a user-provided buffer or a static system buffer.
@@ -1658,7 +1680,7 @@ uint32 str2ip(const char* ip_str)
 }
 
 // Reorders bytes from network to little endian (Windows).
-// Neccessary for sending port numbers to the RO client until Gravity notices that they forgot ntohs() calls.
+// Necessary for sending port numbers to the RO client until Gravity notices that they forgot ntohs() calls.
 uint16 ntows(uint16 netshort)
 {
 	return ((netshort & 0xFF) << 8) | ((netshort & 0xFF00) >> 8);

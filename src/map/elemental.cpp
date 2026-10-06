@@ -222,7 +222,7 @@ void elemental_summon_init(s_elemental_data *ed) {
  * Inter-serv has sent us the elemental data from sql, fill it in map-serv memory
  * @param ele : The elemental data received from char-serv
  * @param flag : 0:not created, 1:was saved/loaded
- * @return 0:failed, 1:sucess
+ * @return 0:failed, 1:success
  */
 int32 elemental_data_received(s_elemental *ele, bool flag) {
 	map_session_data *sd;
@@ -250,7 +250,6 @@ int32 elemental_data_received(s_elemental *ele, bool flag) {
 		memcpy(&ed->elemental, ele, sizeof(s_elemental));
 		status_set_viewdata(ed, ed->elemental.class_);
 		ed->vd->look[LOOK_HEAD_MID] = 10; // TODO: Why?
-		status_change_init(ed);
 		unit_dataset(ed);
 		ed->ud.dir = sd->ud.dir;
 
@@ -491,7 +490,7 @@ struct s_skill_condition elemental_skill_get_requirements(uint16 skill_id, uint1
 	return req;
 }
 
-int32 elemental_set_target( map_session_data *sd, block_list *bl ) {
+int32 elemental_set_target( map_session_data *sd, const block_list* bl ) {
 	s_elemental_data *ed = sd->ed;
 
 	nullpo_ret(ed);
@@ -1058,6 +1057,18 @@ uint64 ElementalDatabase::parseBodyNode(const ryml::NodeRef& node) {
 	} else {
 		if (!exists)
 			elemental->status.dmotion = 360;
+	}
+
+	if (this->nodeExists(node, "DamageTaken")) {
+		uint16 damage;
+
+		if (!this->asUInt16Rate(node, "DamageTaken", damage, 100))
+			return 0;
+
+		elemental->damagetaken = damage;
+	} else {
+		if (!exists)
+			elemental->damagetaken = 100;
 	}
 
 	elemental->status.aspd_rate = 1000;

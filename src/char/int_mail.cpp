@@ -106,7 +106,6 @@ int32 mail_savemessage(struct mail_message* msg)
 	||  SQL_SUCCESS != stmt.Execute() )
 	{
 		SqlStmt_ShowDebug(stmt);
-		StringBuf_Destroy(&buf);
 		Sql_QueryStr( sql_handle, "ROLLBACK" );
 		return msg->id = 0;
 	} else
@@ -150,8 +149,6 @@ int32 mail_savemessage(struct mail_message* msg)
 		msg->id = 0;
 		Sql_QueryStr( sql_handle, "ROLLBACK" );
 	}
-
-	StringBuf_Destroy(&buf);
 
 	if( msg->id && SQL_ERROR == Sql_QueryStr( sql_handle, "COMMIT" ) ){
 		Sql_ShowDebug( sql_handle );
@@ -215,7 +212,6 @@ bool mail_loadmessage(int32 mail_id, struct mail_message* msg)
 	if( SQL_ERROR == Sql_Query(sql_handle, StringBuf_Value(&buf)) ){
 		Sql_ShowDebug(sql_handle);
 		Sql_FreeResult(sql_handle);
-		StringBuf_Destroy(&buf);
 		return false;
 	}
 
@@ -243,13 +239,17 @@ bool mail_loadmessage(int32 mail_id, struct mail_message* msg)
 		}
 	}
 
-	StringBuf_Destroy(&buf);
 	Sql_FreeResult(sql_handle);
 
 	return true;
 }
 
 int32 mail_timer_sub( int32 limit, enum mail_inbox_type type ){
+	// Server is configured to never delete or return mails
+	if( limit == 0 ){
+		return 0;
+	}
+
 	// Start by deleting all expired mails sent by the server
 	if( SQL_ERROR == Sql_Query( sql_handle, "DELETE FROM `%s`WHERE `type` = '%d' AND `send_id` = '0' AND `time` <= UNIX_TIMESTAMP( NOW() - INTERVAL %d DAY )", schema_config.mail_db, type, limit ) ){
 		Sql_ShowDebug( sql_handle );
@@ -443,13 +443,9 @@ void mapif_parse_Mail_getattach(int32 fd)
 bool mapif_Mail_delete( int32 fd, uint32 char_id, int32 mail_id, uint32 account_id ){
 	bool failed = false;
 
-	if( SQL_ERROR == Sql_QueryStr( sql_handle, "START TRANSACTION" ) ||
-		SQL_ERROR == Sql_Query( sql_handle, "DELETE FROM `%s` WHERE `id` = '%d'", schema_config.mail_db, mail_id ) ||
-		SQL_ERROR == Sql_Query( sql_handle, "DELETE FROM `%s` WHERE `id` = '%d'", schema_config.mail_attachment_db, mail_id ) ||
-		SQL_ERROR == Sql_QueryStr( sql_handle, "COMMIT" ) ){
-
+	// The Foreign Key will automatically delete all attachments
+	if( SQL_ERROR == Sql_Query( sql_handle, "DELETE FROM `%s` WHERE `id` = '%d'", schema_config.mail_db, mail_id ) ){
 		Sql_ShowDebug( sql_handle );
-		Sql_QueryStr( sql_handle, "ROLLBACK" );
 
 		// We do not want to trigger failure messages, if the map server did not send a request
 		if( fd <= 0 ){
