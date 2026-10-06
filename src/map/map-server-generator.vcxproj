@@ -196,6 +196,23 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="skills/skill_acolyte.hpp" />
+    <ClInclude Include="skills/skill_archer.hpp" />
+    <ClInclude Include="skills/skill_custom.hpp" />
+    <ClInclude Include="skills/skill_elemental.hpp" />
+    <ClInclude Include="skills/skill_gunslinger.hpp" />
+    <ClInclude Include="skills/skill_homunculus.hpp" />
+    <ClInclude Include="skills/skill_mage.hpp" />
+    <ClInclude Include="skills/skill_mercenary.hpp" />
+    <ClInclude Include="skills/skill_merchant.hpp" />
+    <ClInclude Include="skills/skill_ninja.hpp" />
+    <ClInclude Include="skills/skill_novice.hpp" />
+    <ClInclude Include="skills/skill_npc.hpp" />
+    <ClInclude Include="skills/skill_other.hpp" />
+    <ClInclude Include="skills/skill_summoner.hpp" />
+    <ClInclude Include="skills/skill_swordman.hpp" />
+    <ClInclude Include="skills/skill_taekwon.hpp" />
+    <ClInclude Include="skills/skill_thief.hpp" />
     <ClInclude Include="achievement.hpp" />
     <ClInclude Include="atcommand.hpp" />
     <ClInclude Include="battle.hpp" />
@@ -247,6 +264,23 @@
     <ClInclude Include="vending.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="skills/skill_acolyte.cpp" />
+    <ClCompile Include="skills/skill_archer.cpp" />
+    <ClCompile Include="skills/skill_custom.cpp" />
+    <ClCompile Include="skills/skill_elemental.cpp" />
+    <ClCompile Include="skills/skill_gunslinger.cpp" />
+    <ClCompile Include="skills/skill_homunculus.cpp" />
+    <ClCompile Include="skills/skill_mage.cpp" />
+    <ClCompile Include="skills/skill_mercenary.cpp" />
+    <ClCompile Include="skills/skill_merchant.cpp" />
+    <ClCompile Include="skills/skill_ninja.cpp" />
+    <ClCompile Include="skills/skill_novice.cpp" />
+    <ClCompile Include="skills/skill_npc.cpp" />
+    <ClCompile Include="skills/skill_other.cpp" />
+    <ClCompile Include="skills/skill_summoner.cpp" />
+    <ClCompile Include="skills/skill_swordman.cpp" />
+    <ClCompile Include="skills/skill_taekwon.cpp" />
+    <ClCompile Include="skills/skill_thief.cpp" />
     <ClCompile Include="achievement.cpp" />
     <ClCompile Include="atcommand.cpp" />
     <ClCompile Include="battle.cpp" />
